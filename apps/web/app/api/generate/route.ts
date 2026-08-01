@@ -52,7 +52,9 @@ export async function POST(request: Request) {
 
     // Cliente Supabase admin (server-side)
     const supabase = createClient(
+      // biome-ignore lint/style/noNonNullAssertion: env vars required at runtime
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      // biome-ignore lint/style/noNonNullAssertion: env vars required at runtime
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
     );
 
@@ -166,7 +168,10 @@ export async function POST(request: Request) {
 
     if (!generated) {
       await supabase.from('user_projects').update({ status: 'draft' }).eq('id', projectId);
-      return NextResponse.json({ success: false, error: 'La IA devolvió datos vacíos' }, { status: 502 });
+      return NextResponse.json(
+        { success: false, error: 'La IA devolvió datos vacíos' },
+        { status: 502 },
+      );
     }
 
     const html = generated.html || '';

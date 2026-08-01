@@ -20,7 +20,7 @@ import {
   Zap,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
 const STATUS_ICONS: Record<string, React.ReactNode> = {
@@ -43,7 +43,6 @@ export default function ProjectPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const { currentProject, fetchProject, loading } = useProjectStore();
   const { refreshCredits } = useAuthStore();
-  const router = useRouter();
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState('');
   const [genProgress, setGenProgress] = useState(0);
@@ -108,8 +107,8 @@ export default function ProjectPage() {
 
       // Recargar proyecto y créditos
       await Promise.all([fetchProject(projectId), refreshCredits()]);
-    } catch (err: any) {
-      setGenError(err.message || 'Error de conexión');
+    } catch (err) {
+      setGenError(err instanceof Error ? err.message : 'Error de conexión');
     } finally {
       setGenerating(false);
     }
