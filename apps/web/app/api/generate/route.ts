@@ -1,15 +1,14 @@
-import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { NextResponse } from 'next/server';
 
 // ─── System prompt para generación de sitios ────────────────
-function buildSystemPrompt(briefing: any): string {
-  const sections = briefing.sections?.join(', ') || 'inicio, servicios, contacto';
-  const tone = briefing.tone || 'moderno';
-  const colors = briefing.brand_colors?.join(', ') || 'personalizados';
-  const industry = briefing.industry || 'negocio';
-  const description = briefing.description || '';
-  const audience = briefing.target_audience || '';
-  const businessName = briefing.business_name || 'Mi Negocio';
+function buildSystemPrompt(briefing: Record<string, unknown>): string {
+  const sections = (briefing.sections as string[])?.join(', ') || 'inicio, servicios, contacto';
+  const tone = (briefing.tone as string) || 'moderno';
+  const industry = (briefing.industry as string) || 'negocio';
+  const description = (briefing.description as string) || '';
+  const audience = (briefing.target_audience as string) || '';
+  const businessName = (briefing.business_name as string) || 'Mi Negocio';
 
   return `Eres un diseñador web experto. Genera un sitio web completo para "${businessName}", un ${industry}.
 
@@ -58,7 +57,10 @@ export async function POST(request: Request) {
     );
 
     // Verificar usuario
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser(token);
     if (userError || !user) {
       return NextResponse.json({ success: false, error: 'Token inválido' }, { status: 401 });
     }
@@ -72,11 +74,17 @@ export async function POST(request: Request) {
       .single();
 
     if (projectError || !project) {
-      return NextResponse.json({ success: false, error: 'Proyecto no encontrado' }, { status: 404 });
+      return NextResponse.json(
+        { success: false, error: 'Proyecto no encontrado' },
+        { status: 404 },
+      );
     }
 
     if (project.status === 'generating') {
-      return NextResponse.json({ success: false, error: 'Generación en progreso' }, { status: 409 });
+      return NextResponse.json(
+        { success: false, error: 'Generación en progreso' },
+        { status: 409 },
+      );
     }
 
     // Verificar créditos
@@ -87,7 +95,10 @@ export async function POST(request: Request) {
       .single();
 
     if (!profile || profile.credits_balance < 2) {
-      return NextResponse.json({ success: false, error: 'Créditos insuficientes' }, { status: 402 });
+      return NextResponse.json(
+        { success: false, error: 'Créditos insuficientes' },
+        { status: 402 },
+      );
     }
 
     // Marcar como generando
@@ -105,7 +116,7 @@ export async function POST(request: Request) {
     const openRouterRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': 'https://webcraft.ai',
         'X-Title': 'WebCraft AI Studio',
@@ -114,7 +125,10 @@ export async function POST(request: Request) {
         model: 'google/gemini-flash-1.5',
         messages: [
           { role: 'system', content: prompt },
-          { role: 'user', content: `Genera el sitio web para ${project.name}. Responde solo con el JSON.` },
+          {
+            role: 'user',
+            content: `Genera el sitio web para ${project.name}. Responde solo con el JSON.`,
+          },
         ],
         max_tokens: 4096,
         temperature: 0.7,
@@ -126,7 +140,10 @@ export async function POST(request: Request) {
     if (!openRouterRes.ok) {
       await supabase.from('user_projects').update({ status: 'draft' }).eq('id', projectId);
       const errText = await openRouterRes.text();
-      return NextResponse.json({ success: false, error: `OpenRouter error: ${errText.slice(0,200)}` }, { status: 502 });
+      return NextResponse.json(
+        { success: false, error: `OpenRouter error: ${errText.slice(0, 200)}` },
+        { status: 502 },
+      );
     }
 
     const aiData = await openRouterRes.json();
@@ -135,13 +152,21 @@ export async function POST(request: Request) {
     const tokensOut = aiData.usage?.completion_tokens || 0;
 
     // Parsear respuesta JSON
-    let generated;
+    let generated: Record<string, string> | undefined;
     try {
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       generated = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(content);
     } catch {
       await supabase.from('user_projects').update({ status: 'draft' }).eq('id', projectId);
-      return NextResponse.json({ success: false, error: 'La IA no devolvió JSON válido' }, { status: 502 });
+      return NextResponse.json(
+        { success: false, error: 'La IA no devolvió JSON válido' },
+        { status: 502 },
+      );
+    }
+
+    if (!generated) {
+      await supabase.from('user_projects').update({ status: 'draft' }).eq('id', projectId);
+      return NextResponse.json({ success: false, error: 'La IA devolvió datos vacíos' }, { status: 502 });
     }
 
     const html = generated.html || '';
@@ -150,12 +175,15 @@ export async function POST(request: Request) {
     const creditsCost = 2; // Gemini Flash
 
     // Guardar en BD
-    await supabase.from('user_projects').update({
-      html_content: html,
-      css_content: css,
-      js_content: js,
-      status: 'ready',
-    }).eq('id', projectId);
+    await supabase
+      .from('user_projects')
+      .update({
+        html_content: html,
+        css_content: css,
+        js_content: js,
+        status: 'ready',
+      })
+      .eq('id', projectId);
 
     // Deducir créditos
     await supabase.rpc('deduct_credits', {
@@ -198,8 +226,9 @@ export async function POST(request: Request) {
         model: 'google/gemini-flash-1.5',
       },
     });
-  } catch (err: any) {
-    console.error('[generate] Error:', err);
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Error desconocido';
+    console.error('[generate] Error:', message);
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

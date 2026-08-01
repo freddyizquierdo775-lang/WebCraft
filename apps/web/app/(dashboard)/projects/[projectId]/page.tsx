@@ -56,7 +56,10 @@ export default function ProjectPage() {
 
   // Simular progreso durante generación
   useEffect(() => {
-    if (!generating) { setGenProgress(0); return; }
+    if (!generating) {
+      setGenProgress(0);
+      return;
+    }
     const interval = setInterval(() => {
       setGenProgress((p) => Math.min(p + Math.random() * 15, 90));
     }, 800);
@@ -70,7 +73,9 @@ export default function ProjectPage() {
     setGenProgress(5);
 
     const supabase = createBrowserClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     const token = session?.access_token;
 
     if (!token) {
@@ -138,20 +143,32 @@ export default function ProjectPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <Link href="/dashboard">
-            <Button variant="ghost" size="icon"><ArrowLeft className="h-5 w-5" /></Button>
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
           </Link>
           <div>
             <h2 className="text-2xl font-bold">{currentProject.name}</h2>
-            <p className="text-sm text-muted-foreground">{currentProject.description || 'Sin descripción'}</p>
+            <p className="text-sm text-muted-foreground">
+              {currentProject.description || 'Sin descripción'}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant={currentProject.status === 'published' ? 'default' : 'secondary'} className="gap-1">
-            {STATUS_ICONS[currentProject.status]}{STATUS_LABELS[currentProject.status]}
+          <Badge
+            variant={currentProject.status === 'published' ? 'default' : 'secondary'}
+            className="gap-1"
+          >
+            {STATUS_ICONS[currentProject.status]}
+            {STATUS_LABELS[currentProject.status]}
           </Badge>
           {currentProject.status === 'draft' && (
             <Button onClick={handleGenerate} disabled={generating} className="gap-2">
-              {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+              {generating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Zap className="h-4 w-4" />
+              )}
               {generating ? 'Generando...' : 'Generar sitio'}
             </Button>
           )}
@@ -217,7 +234,9 @@ export default function ProjectPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2"><Code className="h-5 w-5" /> Vista previa</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Code className="h-5 w-5" /> Vista previa
+              </CardTitle>
               <CardDescription>Contenido generado por IA</CardDescription>
             </div>
             <Button variant="outline" size="sm" asChild>
@@ -238,24 +257,31 @@ export default function ProjectPage() {
       )}
 
       {/* Briefing summary */}
-      {currentProject.briefing_data && Object.keys(currentProject.briefing_data as object).length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Briefing del proyecto</CardTitle>
-            <CardDescription>Datos proporcionados a la IA para la generación</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <dl className="grid gap-3 sm:grid-cols-2">
-              {Object.entries(currentProject.briefing_data as Record<string, unknown>).map(([key, value]) => (
-                <div key={key}>
-                  <dt className="text-sm font-medium text-muted-foreground capitalize">{key.replace(/_/g, ' ')}</dt>
-                  <dd className="text-sm">{Array.isArray(value) ? value.join(', ') : String(value)}</dd>
-                </div>
-              ))}
-            </dl>
-          </CardContent>
-        </Card>
-      )}
+      {currentProject.briefing_data &&
+        Object.keys(currentProject.briefing_data as object).length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Briefing del proyecto</CardTitle>
+              <CardDescription>Datos proporcionados a la IA para la generación</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <dl className="grid gap-3 sm:grid-cols-2">
+                {Object.entries(currentProject.briefing_data as Record<string, unknown>).map(
+                  ([key, value]) => (
+                    <div key={key}>
+                      <dt className="text-sm font-medium text-muted-foreground capitalize">
+                        {key.replace(/_/g, ' ')}
+                      </dt>
+                      <dd className="text-sm">
+                        {Array.isArray(value) ? value.join(', ') : String(value)}
+                      </dd>
+                    </div>
+                  ),
+                )}
+              </dl>
+            </CardContent>
+          </Card>
+        )}
 
       {/* Empty state */}
       {currentProject.status === 'draft' && !generating && (
@@ -264,7 +290,8 @@ export default function ProjectPage() {
             <Sparkles className="mb-4 h-16 w-16 text-primary/30" />
             <h3 className="mb-2 text-lg font-semibold">Listo para generar</h3>
             <p className="mb-6 max-w-md text-center text-sm text-muted-foreground">
-              Tu proyecto está configurado. Haz clic en "Generar sitio" para que la IA cree un sitio web completo.
+              Tu proyecto está configurado. Haz clic en "Generar sitio" para que la IA cree un sitio
+              web completo.
             </p>
             <Button onClick={handleGenerate} size="lg" className="gap-2">
               <Zap className="h-5 w-5" /> Generar sitio (2 créditos)

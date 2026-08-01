@@ -4,8 +4,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { createBrowserClient } from '@/lib/supabase';
-import { useAuthStore } from '@/stores/auth-store';
 import { cn } from '@/lib/utils';
+import { useAuthStore } from '@/stores/auth-store';
 import {
   CreditCard,
   LayoutDashboard,
@@ -97,7 +97,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 style={{ width: `${(credits / 10) * 100}%` }}
               />
             </div>
-            <p className="mt-1 text-[10px] text-muted-foreground">Plan {plan} · se renuevan mensualmente</p>
+            <p className="mt-1 text-[10px] text-muted-foreground">
+              Plan {plan} · se renuevan mensualmente
+            </p>
           </div>
         </div>
 
