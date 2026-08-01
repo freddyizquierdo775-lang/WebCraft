@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+// biome-ignore lint/style/noNonNullAssertion: env vars required by Supabase
 import { NextResponse } from 'next/server';
 
 // ─── POST /api/granular-edit ───────────────────────────────

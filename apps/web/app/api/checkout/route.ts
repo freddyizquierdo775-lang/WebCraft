@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+// biome-ignore lint/style/noNonNullAssertion: env vars required by Supabase
 import Stripe from 'stripe';
 
 export async function POST(request: Request) {

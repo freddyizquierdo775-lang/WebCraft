@@ -148,8 +148,11 @@ export function AIPanel({ selectedElement, projectId, onApplyEdit, credits }: AI
 
       {/* Prompt input */}
       <div className="border-b p-4">
-        <label className="mb-2 block text-sm font-medium">¿Qué quieres cambiar?</label>
+        <label htmlFor="ai-prompt" className="mb-2 block text-sm font-medium">
+          ¿Qué quieres cambiar?
+        </label>
         <Textarea
+          id="ai-prompt"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="Describe el cambio que quieres hacer a este elemento..."
@@ -221,7 +224,8 @@ export function AIPanel({ selectedElement, projectId, onApplyEdit, credits }: AI
           <div className="space-y-1">
             {examples.map((ex, i) => (
               <button
-                key={i}
+                type="button"
+                key={ex}
                 onClick={() => setPrompt(ex)}
                 className="block w-full text-left text-xs text-muted-foreground hover:text-foreground transition-colors truncate rounded px-2 py-1 hover:bg-muted"
               >

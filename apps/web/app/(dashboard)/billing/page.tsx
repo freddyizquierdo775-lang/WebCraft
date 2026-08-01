@@ -16,7 +16,12 @@ const PLAN_ICONS = { free: Zap, starter: Sparkles, pro: Crown, agency: Building2
 
 export default function BillingPage() {
   const { user, loadUser } = useAuthStore();
-interface CreditPackage { id: string; name: string; credits: number; price_cents: number; }
+  interface CreditPackage {
+    id: string;
+    name: string;
+    credits: number;
+    price_cents: number;
+  }
   const [packages, setPackages] = useState<CreditPackage[]>([]);
   const [checkingOut, setCheckingOut] = useState<string | null>(null);
   const router = useRouter();
