@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { createBrowserClient } from '@/lib/supabase';
+import { useAuthStore } from '@/stores/auth-store';
 import { cn } from '@/lib/utils';
 import {
   CreditCard,
@@ -31,19 +32,19 @@ const NAV_ITEMS = [
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userEmail, setUserEmail] = useState('');
-  // biome-ignore lint/correctness/noUnusedVariables: used in JSX credits display
-  const [credits, setCredits] = useState(10);
+  const { user, loadUser } = useAuthStore();
+  const credits = user?.credits_balance ?? 0;
+  const plan = user?.plan ?? 'free';
   const pathname = usePathname();
   const router = useRouter();
 
   useEffect(() => {
+    loadUser();
     const supabase = createBrowserClient();
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user?.email) {
-        setUserEmail(data.user.email);
-      }
+      if (data.user?.email) setUserEmail(data.user.email);
     });
-  }, []);
+  }, [loadUser]);
 
   const handleSignOut = async () => {
     const supabase = createBrowserClient();
@@ -96,7 +97,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 style={{ width: `${(credits / 10) * 100}%` }}
               />
             </div>
-            <p className="mt-1 text-[10px] text-muted-foreground">Plan Free · 10 créditos/mes</p>
+            <p className="mt-1 text-[10px] text-muted-foreground">Plan {plan} · se renuevan mensualmente</p>
           </div>
         </div>
 
