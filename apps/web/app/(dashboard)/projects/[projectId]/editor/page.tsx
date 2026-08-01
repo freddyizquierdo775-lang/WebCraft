@@ -18,7 +18,6 @@ import { useCallback, useEffect, useState } from 'react';
 
 export default function EditorPage() {
   const { projectId } = useParams<{ projectId: string }>();
-  const router = useRouter();
   const { currentProject, fetchProject } = useProjectStore();
   const { user } = useAuthStore();
   const {
@@ -43,7 +42,8 @@ export default function EditorPage() {
   const [activeRightTab, setActiveRightTab] = useState('ai');
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-  const _outlineTree: unknown[] = [];
+  // biome-ignore lint/suspicious/noExplicitAny: placeholder for GrapesJS tree
+  const [_outlineTree] = useState<any[]>([]);
 
   // Load project
   useEffect(() => {
