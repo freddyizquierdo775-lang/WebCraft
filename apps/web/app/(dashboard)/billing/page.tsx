@@ -102,11 +102,7 @@ export default function BillingPage() {
                       disabled={isCurrent}
                       asChild={!isCurrent}
                     >
-                      {isCurrent ? (
-                        'Plan actual'
-                      ) : (
-                        <Link href="/payment-setup">Elegir plan</Link>
-                      )}
+                      {isCurrent ? 'Plan actual' : <Link href="/payment-setup">Elegir plan</Link>}
                     </Button>
                   </CardContent>
                 </Card>

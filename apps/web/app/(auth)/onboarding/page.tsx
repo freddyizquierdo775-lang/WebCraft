@@ -7,9 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
+import { createBrowserClient } from '@/lib/supabase';
 import { Check, ChevronRight, Globe, Palette, ShoppingBag, Store } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { createBrowserClient } from '@/lib/supabase';
 import { useState } from 'react';
 
 const STEPS = [
@@ -89,8 +89,13 @@ export default function OnboardingPage() {
     setLoading(true);
     try {
       const supabase = createBrowserClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/login'); return; }
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/login');
+        return;
+      }
 
       // Crear proyecto en Supabase con los datos del briefing
       const { data: project, error } = await supabase
