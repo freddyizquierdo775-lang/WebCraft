@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+import { createBrowserClient } from '@/lib/supabase';
 import { ArrowRight, Check, Code, Loader2, RotateCcw, Sparkles, X } from 'lucide-react';
 import { useState } from 'react';
 
@@ -47,13 +48,19 @@ export function AIPanel({ selectedElement, projectId, onApplyEdit, credits }: AI
     setResult(null);
 
     try {
-      const res = await fetch(`/api/v1/projects/${projectId}/granular-edit`, {
+      const supabase = createBrowserClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      const res = await fetch('/api/granular-edit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
-          element_id: selectedElement.id,
-          element_path: selectedElement.path.join(' > '),
-          element_html: selectedElement.html,
+          projectId,
+          elementHtml: selectedElement.html,
           prompt: prompt.trim(),
         }),
       });
@@ -66,9 +73,9 @@ export function AIPanel({ selectedElement, projectId, onApplyEdit, credits }: AI
       const data = await res.json();
       if (data.success) {
         setResult({
-          html: data.data.modified_html,
-          diff: data.data.diff,
-          explanation: data.data.explanation || 'Edición aplicada exitosamente.',
+          html: data.data.modifiedHtml,
+          diff: prompt.trim(),
+          explanation: 'Edición aplicada exitosamente.',
         });
         setHistory((prev) => [
           {

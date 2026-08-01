@@ -67,25 +67,35 @@ export default function EditorPage() {
     setHasChanges(html !== originalHtml || css !== originalCss);
   }, [html, css, originalHtml, originalCss]);
 
+  const handleSave = useCallback(async () => {
+    if (!projectId) return;
+    setSaving(true);
+    const supabase = createBrowserClient();
+    const { error } = await supabase
+      .from('user_projects')
+      .update({ html_content: html, css_content: css, updated_at: new Date().toISOString() })
+      .eq('id', projectId);
+    if (!error) { setOriginalContent(html, css); setHasChanges(false); }
+    setSaving(false);
+  }, [projectId, html, css, setOriginalContent]);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
-        e.preventDefault();
-        undo();
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) {
-        e.preventDefault();
-        redo();
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        handleSave();
-      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) { e.preventDefault(); redo(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); handleSave(); }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [html, css]);
+  }, [undo, redo, handleSave]);
+
+  // Autosave cada 30s cuando hay cambios
+  useEffect(() => {
+    if (!hasChanges) return;
+    const timer = setTimeout(() => { handleSave(); }, 30000);
+    return () => clearTimeout(timer);
+  }, [hasChanges, handleSave]);
 
   const handleElementSelect = useCallback(
     (el: { id: string; tag: string; path: string[]; html: string }) => {
@@ -108,28 +118,6 @@ export default function EditorPage() {
     },
     [css, applyEdit, setAIEditing],
   );
-
-  const handleSave = async () => {
-    if (!projectId) return;
-    setSaving(true);
-
-    const supabase = createBrowserClient();
-    const { error } = await supabase
-      .from('user_projects')
-      .update({
-        html_content: html,
-        css_content: css,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', projectId);
-
-    if (!error) {
-      setOriginalContent(html, css);
-      setHasChanges(false);
-    }
-
-    setSaving(false);
-  };
 
   if (!currentProject) {
     return (
