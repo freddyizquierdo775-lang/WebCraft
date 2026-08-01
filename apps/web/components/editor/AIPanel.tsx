@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
 import { createBrowserClient } from '@/lib/supabase';
+import { cn } from '@/lib/utils';
 import { ArrowRight, Check, Code, Loader2, RotateCcw, Sparkles, X } from 'lucide-react';
 import { useState } from 'react';
 
@@ -49,7 +49,9 @@ export function AIPanel({ selectedElement, projectId, onApplyEdit, credits }: AI
 
     try {
       const supabase = createBrowserClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       const token = session?.access_token;
 
       const res = await fetch('/api/granular-edit', {

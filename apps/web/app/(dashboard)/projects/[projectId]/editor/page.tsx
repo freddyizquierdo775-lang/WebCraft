@@ -13,7 +13,7 @@ import { useEditorStore } from '@/stores/editor-store';
 import { useProjectStore } from '@/stores/project-store';
 import { ArrowLeft, Eye, Layers, Redo2, Save, Sparkles, Undo2 } from 'lucide-react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
 export default function EditorPage() {
@@ -43,7 +43,7 @@ export default function EditorPage() {
   const [activeRightTab, setActiveRightTab] = useState('ai');
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-  const [outlineTree, setOutlineTree] = useState<any[]>([]);
+  const _outlineTree: unknown[] = [];
 
   // Load project
   useEffect(() => {
@@ -75,16 +75,28 @@ export default function EditorPage() {
       .from('user_projects')
       .update({ html_content: html, css_content: css, updated_at: new Date().toISOString() })
       .eq('id', projectId);
-    if (!error) { setOriginalContent(html, css); setHasChanges(false); }
+    if (!error) {
+      setOriginalContent(html, css);
+      setHasChanges(false);
+    }
     setSaving(false);
   }, [projectId, html, css, setOriginalContent]);
 
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) { e.preventDefault(); redo(); }
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); handleSave(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) {
+        e.preventDefault();
+        redo();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
@@ -93,7 +105,9 @@ export default function EditorPage() {
   // Autosave cada 30s cuando hay cambios
   useEffect(() => {
     if (!hasChanges) return;
-    const timer = setTimeout(() => { handleSave(); }, 30000);
+    const timer = setTimeout(() => {
+      handleSave();
+    }, 30000);
     return () => clearTimeout(timer);
   }, [hasChanges, handleSave]);
 
@@ -206,8 +220,8 @@ export default function EditorPage() {
         {showLeftPanel && (
           <div className="w-56 flex-shrink-0 border-r bg-card">
             <OutlinePanel
-              tree={outlineTree}
-              onSelectNode={(id) => {
+              tree={_outlineTree}
+              onSelectNode={(_id: string) => {
                 // GrapesJS selection would be triggered here
               }}
               selectedId={selectedElement?.id || null}
