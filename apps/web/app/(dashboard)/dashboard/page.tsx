@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 import {
   Clock,
   Edit3,
@@ -127,7 +128,9 @@ export default function DashboardPage() {
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
-                      <CardTitle className="text-base">{project.name}</CardTitle>
+                      <Link href={`/projects/${project.id}`} className="hover:underline">
+                        <CardTitle className="text-base">{project.name}</CardTitle>
+                      </Link>
                       <CardDescription className="line-clamp-1 text-xs">
                         {project.description}
                       </CardDescription>
@@ -150,9 +153,11 @@ export default function DashboardPage() {
                   </div>
 
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="flex-1 gap-1">
-                      <Edit3 className="h-3.5 w-3.5" />
-                      Editar
+                    <Button variant="outline" size="sm" className="flex-1 gap-1" asChild>
+                      <Link href={`/projects/${project.id}/editor`}>
+                        <Edit3 className="h-3.5 w-3.5" />
+                        Editar
+                      </Link>
                     </Button>
                     {project.published_url ? (
                       <Button variant="outline" size="sm" className="flex-1 gap-1" asChild>
@@ -169,9 +174,11 @@ export default function DashboardPage() {
                         </a>
                       </Button>
                     ) : (
-                      <Button variant="outline" size="sm" className="flex-1 gap-1" disabled>
-                        <Sparkles className="h-3.5 w-3.5" />
-                        Generar
+                      <Button variant="outline" size="sm" className="flex-1 gap-1" asChild>
+                        <Link href={`/projects/${project.id}`}>
+                          <Sparkles className="h-3.5 w-3.5" />
+                          Generar
+                        </Link>
                       </Button>
                     )}
                   </div>

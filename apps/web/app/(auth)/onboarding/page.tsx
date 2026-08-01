@@ -9,6 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import { Check, ChevronRight, Globe, Palette, ShoppingBag, Store } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { createBrowserClient } from '@/lib/supabase';
 import { useState } from 'react';
 
 const STEPS = [
@@ -86,10 +87,40 @@ export default function OnboardingPage() {
 
   const handleFinish = async () => {
     setLoading(true);
-    // Fase B: aquí se enviará el briefing al backend para generar el sitio
-    // Por ahora, redirigimos al dashboard
-    await new Promise((r) => setTimeout(r, 1500));
-    router.push('/dashboard');
+    try {
+      const supabase = createBrowserClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { router.push('/login'); return; }
+
+      // Crear proyecto en Supabase con los datos del briefing
+      const { data: project, error } = await supabase
+        .from('user_projects')
+        .insert({
+          owner_id: user.id,
+          name: form.business_name,
+          description: form.description,
+          business_type: form.industry,
+          briefing_data: {
+            industry: form.industry,
+            description: form.description,
+            target_audience: form.target_audience,
+            tone: form.tone,
+            sections: form.sections,
+            language: form.language,
+          },
+          status: 'draft',
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      router.push(`/projects/${project.id}`);
+    } catch (err) {
+      console.error('Error creating project:', err);
+      router.push('/dashboard');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

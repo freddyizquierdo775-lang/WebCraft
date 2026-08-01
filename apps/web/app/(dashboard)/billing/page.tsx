@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { PLAN_LIMITS } from '@webcraft/shared';
 import { Building2, Check, Crown, Sparkles, Zap } from 'lucide-react';
+import Link from 'next/link';
 
 const PLAN_ICONS = {
   free: Zap,
@@ -33,8 +34,8 @@ export default function BillingPage() {
             <p className="text-xs text-muted-foreground">
               Plan Free · 10 créditos/mes · Se renuevan el 1 de agosto
             </p>
-            <Button variant="outline" size="sm" className="mt-4 w-full">
-              Comprar más créditos
+            <Button variant="outline" size="sm" className="mt-4 w-full" asChild>
+              <Link href="/payment-setup">Comprar más créditos</Link>
             </Button>
           </CardContent>
         </Card>
@@ -53,8 +54,8 @@ export default function BillingPage() {
                 </li>
               ))}
             </ul>
-            <Button size="sm" className="mt-4 w-full">
-              Actualizar plan
+            <Button size="sm" className="mt-4 w-full" asChild>
+              <Link href="/payment-setup">Actualizar plan</Link>
             </Button>
           </CardContent>
         </Card>
@@ -99,8 +100,13 @@ export default function BillingPage() {
                       size="sm"
                       className="w-full"
                       disabled={isCurrent}
+                      asChild={!isCurrent}
                     >
-                      {isCurrent ? 'Plan actual' : 'Elegir plan'}
+                      {isCurrent ? (
+                        'Plan actual'
+                      ) : (
+                        <Link href="/payment-setup">Elegir plan</Link>
+                      )}
                     </Button>
                   </CardContent>
                 </Card>

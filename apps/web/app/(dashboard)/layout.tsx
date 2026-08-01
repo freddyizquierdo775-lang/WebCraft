@@ -11,6 +11,7 @@ import {
   LogOut,
   Menu,
   PlusCircle,
+  ShoppingCart,
   Sparkles,
   Store,
   X,
@@ -21,8 +22,10 @@ import { useEffect, useState } from 'react';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Mis Sitios', icon: LayoutDashboard },
-  { href: '/dashboard?tab=marketplace', label: 'Marketplace', icon: Store },
-  { href: '/billing', label: 'Créditos', icon: CreditCard },
+  { href: '/marketplace', label: 'Marketplace', icon: Store },
+  { href: '/ecommerce', label: 'Tienda', icon: ShoppingCart },
+  { href: '/payment-setup', label: 'Pagos', icon: CreditCard },
+  { href: '/billing', label: 'Planes', icon: CreditCard },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
