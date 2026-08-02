@@ -65,7 +65,7 @@ export async function POST(request: Request) {
         'HTTP-Referer': 'https://webcraft.ai',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.0-flash-001',
+        model: 'google/gemma-4-26b-a4b-it:free',
         messages: [
           {
             role: 'system',
@@ -116,7 +116,7 @@ export async function POST(request: Request) {
       project_id: projectId,
       user_id: user.id,
       prompt,
-      model_used: 'google/gemini-2.0-flash-001',
+      model_used: 'google/gemma-4-26b-a4b-it:free',
       tokens_in: aiData.usage?.prompt_tokens || 0,
       tokens_out: aiData.usage?.completion_tokens || 0,
       credits_cost: 1,
