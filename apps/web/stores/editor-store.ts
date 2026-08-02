@@ -1,145 +1,110 @@
 'use client';
 
+import type { ASTNode } from '@/types/ast';
+import { cloneAst } from '@/types/ast';
 import { create } from 'zustand';
 
-interface Snapshot {
-  html: string;
-  css: string;
-  timestamp: number;
-  label: string;
-}
+const MAX_HISTORY = 50;
 
 interface EditorState {
-  // Content
-  html: string;
-  css: string;
-  js: string;
-  originalHtml: string;
-  originalCss: string;
+  ast: ASTNode | null;
+  selectedElementId: string | null;
+  history: ASTNode[];
+  historyIndex: number;
 
-  // Undo/redo
-  snapshots: Snapshot[];
-  currentSnapshotIndex: number;
-  canUndo: boolean;
-  canRedo: boolean;
-
-  // Selection
-  selectedElement: { id: string; tag: string; path: string[]; html: string } | null;
-
-  // AI edits
-  isAIEditing: boolean;
-
-  // Actions
-  setContent: (html: string, css: string, js?: string) => void;
-  setOriginalContent: (html: string, css: string) => void;
-  applyEdit: (html: string, css: string, label: string) => void;
-  undo: () => Snapshot | null;
-  redo: () => Snapshot | null;
-  selectElement: (el: { id: string; tag: string; path: string[]; html: string } | null) => void;
-  setAIEditing: (editing: boolean) => void;
+  setAst: (ast: ASTNode) => void;
+  selectElement: (id: string | null) => void;
+  updateNode: (id: string, updates: Partial<ASTNode>) => void;
+  undo: () => void;
+  redo: () => void;
   reset: () => void;
 }
 
+function pushHistory(history: ASTNode[], historyIndex: number, newAst: ASTNode) {
+  const trimmed = history.slice(0, historyIndex + 1);
+  trimmed.push(cloneAst(newAst));
+  if (trimmed.length > MAX_HISTORY) trimmed.shift();
+  return {
+    history: trimmed,
+    historyIndex: trimmed.length - 1,
+    ast: newAst,
+  };
+}
+
 export const useEditorStore = create<EditorState>((set, get) => ({
-  html: '',
-  css: '',
-  js: '',
-  originalHtml: '',
-  originalCss: '',
-  snapshots: [],
-  currentSnapshotIndex: -1,
-  canUndo: false,
-  canRedo: false,
-  selectedElement: null,
-  isAIEditing: false,
+  ast: null,
+  selectedElementId: null,
+  history: [],
+  historyIndex: -1,
 
-  setContent: (html, css, js = '') => {
-    set({ html, css, js });
-  },
-
-  setOriginalContent: (html, css) => {
-    set({ originalHtml: html, originalCss: css });
-    // Take initial snapshot
-    const state = get();
-    if (state.snapshots.length === 0) {
-      set({
-        snapshots: [{ html, css, timestamp: Date.now(), label: 'Estado inicial' }],
-        currentSnapshotIndex: 0,
-        canUndo: false,
-        canRedo: false,
-      });
-    }
-  },
-
-  applyEdit: (html, css, label) => {
-    const state = get();
-    const newSnapshots = state.snapshots.slice(0, state.currentSnapshotIndex + 1);
-    newSnapshots.push({ html, css, timestamp: Date.now(), label });
-
+  setAst: (ast) => {
     set({
-      html,
-      css,
-      snapshots: newSnapshots,
-      currentSnapshotIndex: newSnapshots.length - 1,
-      canUndo: newSnapshots.length > 1,
-      canRedo: false,
-      selectedElement: null,
+      ast,
+      history: [cloneAst(ast)],
+      historyIndex: 0,
+      selectedElementId: null,
     });
+  },
+
+  selectElement: (id) => set({ selectedElementId: id }),
+
+  updateNode: (id, updates) => {
+    const state = get();
+    if (!state.ast) return;
+    const newAst = cloneAst(state.ast);
+    const updated = applyUpdate(newAst, id, updates);
+    if (!updated) return;
+    set(pushHistory(state.history, state.historyIndex, newAst));
   },
 
   undo: () => {
     const state = get();
-    if (state.currentSnapshotIndex <= 0) return null;
-
-    const newIndex = state.currentSnapshotIndex - 1;
-    const snapshot = state.snapshots[newIndex]!;
-
+    if (state.historyIndex <= 0) return;
+    const newIndex = state.historyIndex - 1;
+    const entry = state.history[newIndex];
+    if (!entry) return;
     set({
-      html: snapshot.html,
-      css: snapshot.css,
-      currentSnapshotIndex: newIndex,
-      canUndo: newIndex > 0,
-      canRedo: true,
-      selectedElement: null,
+      ast: cloneAst(entry),
+      historyIndex: newIndex,
+      selectedElementId: null,
     });
-
-    return snapshot;
   },
 
   redo: () => {
     const state = get();
-    if (state.currentSnapshotIndex >= state.snapshots.length - 1) return null;
-
-    const newIndex = state.currentSnapshotIndex + 1;
-    const snapshot = state.snapshots[newIndex]!;
-
+    if (state.historyIndex >= state.history.length - 1) return;
+    const newIndex = state.historyIndex + 1;
+    const entry = state.history[newIndex];
+    if (!entry) return;
     set({
-      html: snapshot.html,
-      css: snapshot.css,
-      currentSnapshotIndex: newIndex,
-      canUndo: true,
-      canRedo: newIndex < state.snapshots.length - 1,
-      selectedElement: null,
+      ast: cloneAst(entry),
+      historyIndex: newIndex,
+      selectedElementId: null,
     });
-
-    return snapshot;
   },
-
-  selectElement: (el) => set({ selectedElement: el }),
-  setAIEditing: (editing) => set({ isAIEditing: editing }),
 
   reset: () =>
     set({
-      html: '',
-      css: '',
-      js: '',
-      originalHtml: '',
-      originalCss: '',
-      snapshots: [],
-      currentSnapshotIndex: -1,
-      canUndo: false,
-      canRedo: false,
-      selectedElement: null,
-      isAIEditing: false,
+      ast: null,
+      selectedElementId: null,
+      history: [],
+      historyIndex: -1,
     }),
 }));
+
+/** Aplica updates a un nodo (búsqueda recursiva). Retorna true si lo encontró. */
+function applyUpdate(root: ASTNode, targetId: string, updates: Partial<ASTNode>): boolean {
+  if (root.id === targetId) {
+    if (updates.classes !== undefined) root.classes = updates.classes;
+    if (updates.styles !== undefined) root.styles = updates.styles;
+    if (updates.text !== undefined) root.text = updates.text;
+    if (updates.tag !== undefined) root.tag = updates.tag;
+    if (updates.children !== undefined) root.children = updates.children;
+    return true;
+  }
+  if (!root.children) return false;
+  for (const child of root.children) {
+    if (applyUpdate(child, targetId, updates)) return true;
+  }
+  return false;
+}

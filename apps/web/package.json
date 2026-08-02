@@ -28,7 +28,6 @@
     "@webcraft/shared": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "grapesjs": "^0.23.3",
     "grapesjs-blocks-basic": "^1.0.2",
     "grapesjs-preset-webpage": "^1.0.3",
     "lucide-react": "^0.468.0",

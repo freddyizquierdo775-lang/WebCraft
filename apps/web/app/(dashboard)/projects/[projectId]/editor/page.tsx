@@ -1,97 +1,120 @@
 'use client';
 
-import { AIPanel } from '@/components/editor/AIPanel';
-import { EditorCanvas } from '@/components/editor/EditorCanvas';
+import { AstRenderer } from '@/components/editor/AstRenderer';
+import { BottomAIPanel } from '@/components/editor/BottomAIPanel';
 import { OutlinePanel } from '@/components/editor/OutlinePanel';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { RightFloatingBar } from '@/components/editor/RightFloatingBar';
 import { createBrowserClient } from '@/lib/supabase';
-import { useAuthStore } from '@/stores/auth-store';
 import { useEditorStore } from '@/stores/editor-store';
 import { useProjectStore } from '@/stores/project-store';
-import { ArrowLeft, Eye, Layers, Redo2, Save, Sparkles, Undo2 } from 'lucide-react';
+import type { ASTNode } from '@/types/ast';
+import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
+function astToHtml(node: ASTNode): string {
+  const classes = node.classes.length > 0 ? ` class="${node.classes.join(' ')}"` : '';
+  const styles =
+    Object.keys(node.styles).length > 0
+      ? ` style="${Object.entries(node.styles)
+          .map(([k, v]) => `${k}:${v}`)
+          .join(';')}"`
+      : '';
+  const children = node.children?.map(astToHtml).join('') ?? '';
+  const voidTags = ['img', 'br', 'hr', 'input', 'meta', 'link'];
+  if (voidTags.includes(node.tag)) return `<${node.tag}${classes}${styles} />`;
+  return `<${node.tag}${classes}${styles}>${node.text ?? ''}${children}</${node.tag}>`;
+}
+
+const DEFAULT_AST: ASTNode = {
+  id: 'root',
+  tag: 'div',
+  classes: ['min-h-screen', 'bg-white', 'flex', 'flex-col'],
+  styles: {},
+  children: [
+    {
+      id: 'header',
+      tag: 'header',
+      classes: ['p-6', 'bg-purple-600', 'text-white'],
+      styles: {},
+      text: 'Mi Sitio Web',
+      children: [
+        {
+          id: 'nav',
+          tag: 'nav',
+          classes: ['flex', 'gap-4', 'mt-2'],
+          styles: {},
+          text: 'Inicio | Servicios | Contacto',
+        },
+      ],
+    },
+    {
+      id: 'hero',
+      tag: 'section',
+      classes: ['p-12', 'text-center'],
+      styles: {},
+      text: 'Bienvenido a tu nuevo sitio',
+    },
+    {
+      id: 'footer',
+      tag: 'footer',
+      classes: ['p-4', 'bg-gray-100', 'text-center', 'text-sm', 'text-gray-500', 'mt-auto'],
+      styles: {},
+      text: '© 2026 WebCraft AI Studio',
+    },
+  ],
+};
+
 export default function EditorPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const { currentProject, fetchProject } = useProjectStore();
-  const { user } = useAuthStore();
-  const {
-    html,
-    css,
-    originalHtml,
-    originalCss,
-    canUndo,
-    canRedo,
-    selectedElement,
-    setContent,
-    setOriginalContent,
-    applyEdit,
-    undo,
-    redo,
-    selectElement,
-    setAIEditing,
-  } = useEditorStore();
+  const { ast, selectedElementId, setAst, selectElement, undo, redo } = useEditorStore();
 
-  const [showLeftPanel, setShowLeftPanel] = useState(true);
-  const [showRightPanel, setShowRightPanel] = useState(true);
-  const [activeRightTab, setActiveRightTab] = useState('ai');
+  const [showOutline, setShowOutline] = useState(false);
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-  // biome-ignore lint/suspicious/noExplicitAny: placeholder for GrapesJS tree
-  const [_outlineTree] = useState<any[]>([]);
+  const [aiLoading, setAiLoading] = useState(false);
 
-  // Load project
+  const historyIndex = useEditorStore((s) => s.historyIndex);
+  const historyLen = useEditorStore((s) => s.history.length);
+  const canUndo = historyIndex > 0;
+  const canRedo = historyIndex < historyLen - 1;
+
   useEffect(() => {
     if (projectId) fetchProject(projectId);
   }, [projectId, fetchProject]);
 
-  // Load content into editor
   useEffect(() => {
     if (currentProject?.html_content) {
-      setContent(
-        currentProject.html_content,
-        currentProject.css_content || '',
-        currentProject.js_content || '',
-      );
-      setOriginalContent(currentProject.html_content, currentProject.css_content || '');
-    }
-  }, [currentProject, setContent, setOriginalContent]);
-
-  // Check for unsaved changes
-  useEffect(() => {
-    setHasChanges(html !== originalHtml || css !== originalCss);
-  }, [html, css, originalHtml, originalCss]);
-
-  const handleSave = useCallback(async () => {
-    if (!projectId) return;
-    setSaving(true);
-    const supabase = createBrowserClient();
-    const { error } = await supabase
-      .from('user_projects')
-      .update({ html_content: html, css_content: css, updated_at: new Date().toISOString() })
-      .eq('id', projectId);
-    if (!error) {
-      setOriginalContent(html, css);
+      setAst(DEFAULT_AST);
       setHasChanges(false);
     }
-    setSaving(false);
-  }, [projectId, html, css, setOriginalContent]);
+  }, [currentProject, setAst]);
 
-  // Keyboard shortcuts
+  const handleSave = useCallback(async () => {
+    if (!projectId || !ast) return;
+    setSaving(true);
+    const supabase = createBrowserClient();
+    await supabase
+      .from('user_projects')
+      .update({ html_content: astToHtml(ast), updated_at: new Date().toISOString() })
+      .eq('id', projectId);
+    setHasChanges(false);
+    setSaving(false);
+  }, [projectId, ast]);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
         undo();
+        setHasChanges(true);
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) {
         e.preventDefault();
         redo();
+        setHasChanges(true);
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
@@ -102,7 +125,6 @@ export default function EditorPage() {
     return () => window.removeEventListener('keydown', handler);
   }, [undo, redo, handleSave]);
 
-  // Autosave cada 30s cuando hay cambios
   useEffect(() => {
     if (!hasChanges) return;
     const timer = setTimeout(() => {
@@ -111,187 +133,128 @@ export default function EditorPage() {
     return () => clearTimeout(timer);
   }, [hasChanges, handleSave]);
 
-  const handleElementSelect = useCallback(
-    (el: { id: string; tag: string; path: string[]; html: string }) => {
-      selectElement(el);
-    },
-    [selectElement],
-  );
+  // Fase 4: payload de edición IA
+  const handleAIRequest = useCallback(
+    async (prompt: string) => {
+      if (!ast || !projectId) return;
+      setAiLoading(true);
 
-  const handleContentChange = useCallback(
-    (newHtml: string, newCss: string) => {
-      setContent(newHtml, newCss);
-    },
-    [setContent],
-  );
+      const payload = {
+        prompt,
+        selectedElementId,
+        ast,
+        projectId,
+      };
 
-  const handleAIApply = useCallback(
-    (newHtml: string, diff: string) => {
-      applyEdit(newHtml, css, `IA: ${diff.slice(0, 40)}...`);
-      setAIEditing(false);
+      // Placeholder: futuro POST /api/granular-edit
+      console.log('[AI Payload]', payload);
+
+      // Simula un delay de procesamiento
+      await new Promise((r) => setTimeout(r, 1500));
+      setAiLoading(false);
+      setHasChanges(true);
     },
-    [css, applyEdit, setAIEditing],
+    [ast, selectedElementId, projectId],
   );
 
   if (!currentProject) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-screen items-center justify-center bg-dot-pattern">
         <p className="text-muted-foreground">Cargando proyecto...</p>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen flex-col bg-background">
-      {/* Toolbar */}
-      <header className="flex h-12 items-center gap-2 border-b bg-card px-3">
+    <div className="relative flex h-screen flex-col overflow-hidden bg-dot-pattern">
+      {/* Top bar — minimal */}
+      <div className="absolute left-4 top-4 z-50 flex items-center gap-3">
         <Link href={`/projects/${projectId}`}>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl border bg-card/90 text-muted-foreground shadow-sm backdrop-blur transition-colors hover:bg-card hover:text-foreground">
             <ArrowLeft className="h-4 w-4" />
-          </Button>
+          </div>
         </Link>
-
-        <Separator orientation="vertical" className="h-6" />
-
-        <span className="text-sm font-medium truncate max-w-[200px]">{currentProject.name}</span>
-
-        <Badge variant="outline" className="text-xs">
-          {currentProject.status}
-        </Badge>
-
-        <div className="flex-1" />
-
-        {/* Undo/redo */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          disabled={!canUndo}
-          onClick={() => undo()}
-          title="Deshacer (Ctrl+Z)"
-        >
-          <Undo2 className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          disabled={!canRedo}
-          onClick={() => redo()}
-          title="Rehacer (Ctrl+Shift+Z)"
-        >
-          <Redo2 className="h-4 w-4" />
-        </Button>
-
-        <Separator orientation="vertical" className="h-6" />
-
-        {/* Panel toggles */}
-        <Button
-          variant={showLeftPanel ? 'secondary' : 'ghost'}
-          size="icon"
-          className="h-8 w-8"
-          onClick={() => setShowLeftPanel(!showLeftPanel)}
-          title="Panel de estructura"
-        >
-          <Layers className="h-4 w-4" />
-        </Button>
-        <Button
-          variant={showRightPanel ? 'secondary' : 'ghost'}
-          size="icon"
-          className="h-8 w-8"
-          onClick={() => setShowRightPanel(!showRightPanel)}
-          title="Panel de IA"
-        >
-          <Sparkles className="h-4 w-4" />
-        </Button>
-
-        <Separator orientation="vertical" className="h-6" />
-
-        {/* Save */}
-        <Button size="sm" onClick={handleSave} disabled={!hasChanges || saving} className="gap-1">
-          <Save className="h-3.5 w-3.5" />
-          {saving ? 'Guardando...' : 'Guardar'}
-        </Button>
-      </header>
-
-      {/* Main area */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left panel — Outline */}
-        {showLeftPanel && (
-          <div className="w-56 flex-shrink-0 border-r bg-card">
-            <OutlinePanel
-              tree={_outlineTree}
-              onSelectNode={(_id: string) => {
-                // GrapesJS selection would be triggered here
-              }}
-              selectedId={selectedElement?.id || null}
-            />
-          </div>
-        )}
-
-        {/* Canvas */}
-        <div className="flex-1 overflow-hidden">
-          <EditorCanvas
-            projectId={projectId}
-            initialHtml={html}
-            initialCss={css}
-            onElementSelect={handleElementSelect}
-            onContentChange={handleContentChange}
-          />
-        </div>
-
-        {/* Right panel — AI + Tabs */}
-        {showRightPanel && (
-          <div className="w-80 flex-shrink-0 border-l bg-card">
-            <Tabs
-              value={activeRightTab}
-              onValueChange={setActiveRightTab}
-              className="flex h-full flex-col"
-            >
-              <div className="border-b px-3 pt-2">
-                <TabsList className="w-full">
-                  <TabsTrigger value="ai" className="flex-1 text-xs gap-1">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    IA
-                  </TabsTrigger>
-                  <TabsTrigger value="preview" className="flex-1 text-xs gap-1">
-                    <Eye className="h-3.5 w-3.5" />
-                    Preview
-                  </TabsTrigger>
-                </TabsList>
-              </div>
-              <TabsContent value="ai" className="flex-1 overflow-hidden m-0">
-                <AIPanel
-                  selectedElement={selectedElement}
-                  projectId={projectId}
-                  onApplyEdit={handleAIApply}
-                  credits={user?.credits_balance ?? 0}
-                />
-              </TabsContent>
-              <TabsContent value="preview" className="flex-1 overflow-hidden m-0 p-4">
-                <div className="rounded-lg border overflow-hidden h-full">
-                  <iframe
-                    srcDoc={`${html}<style>${css}</style>`}
-                    className="h-full w-full"
-                    title="Preview"
-                    sandbox="allow-scripts"
-                  />
-                </div>
-              </TabsContent>
-            </Tabs>
-          </div>
+        <span className="text-sm font-medium text-muted-foreground">{currentProject.name}</span>
+        {saving && (
+          <span className="text-xs text-muted-foreground animate-pulse">Guardando...</span>
         )}
       </div>
 
-      {/* Status bar */}
-      <footer className="flex h-7 items-center gap-4 border-t bg-muted/30 px-4 text-xs text-muted-foreground">
-        <span>Proyecto: {projectId?.slice(0, 8)}...</span>
-        <span>{html.length.toLocaleString()} chars HTML</span>
-        <span>{css.length.toLocaleString()} chars CSS</span>
-        {hasChanges && <span className="text-amber-500">● Cambios sin guardar</span>}
-        <div className="flex-1" />
-        <span>WebCraft AI Studio — Editor v0.1</span>
-      </footer>
+      {/* Canvas — browser frame + AST renderer */}
+      <div className="flex flex-1 items-center justify-center p-8 pt-20">
+        <div className="w-full max-w-5xl overflow-hidden rounded-xl border bg-card shadow-2xl">
+          {/* Browser chrome */}
+          <div className="flex items-center gap-1.5 border-b bg-muted/50 px-4 py-2.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+            <span className="h-2.5 w-2.5 rounded-full bg-green-400" />
+            <span className="ml-3 text-[11px] text-muted-foreground">
+              {currentProject.name || 'localhost:3000'}
+            </span>
+          </div>
+          {/* AST content */}
+          <div className="max-h-[60vh] overflow-auto">
+            {ast ? (
+              <AstRenderer node={ast} />
+            ) : (
+              <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
+                Sin contenido — genera tu sitio desde el dashboard
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Outline panel (left drawer) */}
+      {showOutline && (
+        <div className="absolute left-4 top-20 z-40 w-56 rounded-xl border bg-card/95 shadow-lg backdrop-blur">
+          <div className="p-2">
+            <OutlinePanel
+              tree={
+                ast
+                  ? [
+                      {
+                        id: ast.id,
+                        tag: ast.tag,
+                        label: ast.tag,
+                        selected: ast.id === selectedElementId,
+                        children:
+                          ast.children?.map((c) => ({
+                            id: c.id,
+                            tag: c.tag,
+                            label: c.text ?? c.tag,
+                            selected: c.id === selectedElementId,
+                            children: [],
+                          })) ?? [],
+                      },
+                    ]
+                  : []
+              }
+              onSelectNode={(id: string) => selectElement(id)}
+              selectedId={selectedElementId}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Right floating bar */}
+      <RightFloatingBar
+        canUndo={canUndo}
+        canRedo={canRedo}
+        onUndo={() => {
+          undo();
+          setHasChanges(true);
+        }}
+        onRedo={() => {
+          redo();
+          setHasChanges(true);
+        }}
+        onToggleOutline={() => setShowOutline(!showOutline)}
+        showOutline={showOutline}
+      />
+
+      {/* Bottom AI prompt bar */}
+      <BottomAIPanel onSubmit={handleAIRequest} loading={aiLoading} />
     </div>
   );
 }
