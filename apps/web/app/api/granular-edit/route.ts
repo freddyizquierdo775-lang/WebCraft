@@ -64,7 +64,7 @@ export async function POST(request: Request) {
         'HTTP-Referer': 'https://webcraft.ai',
       },
       body: JSON.stringify({
-        model: 'openrouter/auto',
+        model: 'openrouter/free',
         messages: [
           {
             role: 'system',
@@ -115,7 +115,7 @@ export async function POST(request: Request) {
       project_id: projectId,
       user_id: user.id,
       prompt,
-      model_used: 'openrouter/auto',
+      model_used: 'openrouter/free',
       tokens_in: aiData.usage?.prompt_tokens || 0,
       tokens_out: aiData.usage?.completion_tokens || 0,
       credits_cost: 1,
