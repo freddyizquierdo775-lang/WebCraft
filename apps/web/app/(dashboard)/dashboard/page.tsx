@@ -17,6 +17,8 @@ import {
 import Link from 'next/link';
 import { useEffect } from 'react';
 
+export const dynamic = 'force-dynamic';
+
 const STATUS_MAP = {
   draft: { label: 'Borrador', variant: 'secondary' as const, icon: Edit3 },
   generating: { label: 'Generando', variant: 'secondary' as const, icon: Sparkles },
