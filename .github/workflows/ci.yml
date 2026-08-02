@@ -1,0 +1,59 @@
+name: CI — Build, Lint, Audit, Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm biome check apps/web/app apps/web/lib apps/web/components apps/web/stores apps/api/src packages/shared/src
+
+      - name: Build
+        run: pnpm --filter @webcraft/web build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://test.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: test_key
+
+      - name: Audit
+        run: pnpm audit --production || true
+        continue-on-error: true
+
+      - name: Smoke test
+        run: |
+          # Start the built app
+          cd apps/web
+          npx next start -p 3099 &
+          sleep 5
+          # Test routes
+          for path in / /login /signup /onboarding /marketplace /ecommerce /payment-setup; do
+            code=$(curl -sI -o /dev/null -w "%{http_code}" "http://localhost:3099$path")
+            echo "$path → $code"
+            if [ "$code" != "200" ] && [ "$code" != "307" ]; then
+              echo "FAIL: $path returned $code"
+              exit 1
+            fi
+          done
+          echo "All smoke tests passed"
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://test.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: test_key

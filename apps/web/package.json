@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "biome check .",
+    "test": "jest --passWithNoTests",
     "clean": "rm -rf .next"
   },
   "dependencies": {
@@ -31,21 +32,27 @@
     "grapesjs-blocks-basic": "^1.0.2",
     "grapesjs-preset-webpage": "^1.0.3",
     "lucide-react": "^0.468.0",
-    "next": "^14.2.29",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "next": "^16.2.12",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "sonner": "^1.7.4",
     "stripe": "^22.4.0",
     "tailwind-merge": "^2.6.0",
     "zustand": "^5.0.5"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/react": "^16.3.2",
+    "@types/jest": "^30.0.0",
     "@types/node": "^22.13.0",
-    "@types/react": "^18.3.18",
-    "@types/react-dom": "^18.3.5",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
     "autoprefixer": "^10.4.20",
+    "jest": "^30.4.2",
+    "jest-environment-jsdom": "^30.4.1",
     "postcss": "^8.5.3",
     "tailwindcss": "^3.4.17",
+    "ts-jest": "^29.4.12",
     "typescript": "^5.7.0"
   }
 }
