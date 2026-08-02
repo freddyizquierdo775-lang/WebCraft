@@ -28,13 +28,19 @@ const STATUS_MAP = {
 };
 
 function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
+  return new Date(dateStr).toLocaleDateString('es-MX', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 }
 
 export default function DashboardPage() {
   const { projects, loading, fetchProjects } = useProjectStore();
 
-  useEffect(() => { fetchProjects(); }, [fetchProjects]);
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);
 
   const isEmpty = !loading && projects.length === 0;
 
@@ -51,10 +57,15 @@ export default function DashboardPage() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Mis Sitios</h2>
-          <p className="text-sm text-muted-foreground">Gestiona y edita tus sitios web generados con IA</p>
+          <p className="text-sm text-muted-foreground">
+            Gestiona y edita tus sitios web generados con IA
+          </p>
         </div>
         <Link href="/onboarding">
-          <Button className="gap-2"><PlusCircle className="h-4 w-4" />Nuevo sitio</Button>
+          <Button className="gap-2">
+            <PlusCircle className="h-4 w-4" />
+            Nuevo sitio
+          </Button>
         </Link>
       </div>
 
@@ -66,10 +77,14 @@ export default function DashboardPage() {
             </div>
             <h3 className="mb-2 text-lg font-semibold">Aún no tienes sitios</h3>
             <p className="mb-6 max-w-md text-center text-sm text-muted-foreground">
-              Describe tu negocio y deja que la IA genere un sitio web profesional para ti en segundos.
+              Describe tu negocio y deja que la IA genere un sitio web profesional para ti en
+              segundos.
             </p>
             <Link href="/onboarding">
-              <Button size="lg" className="gap-2"><PlusCircle className="h-5 w-5" />Crear mi primer sitio</Button>
+              <Button size="lg" className="gap-2">
+                <PlusCircle className="h-5 w-5" />
+                Crear mi primer sitio
+              </Button>
             </Link>
           </CardContent>
         </Card>
@@ -78,11 +93,15 @@ export default function DashboardPage() {
       {!isEmpty && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => {
-            const statusInfo = STATUS_MAP[project.status as keyof typeof STATUS_MAP] ?? STATUS_MAP.draft;
+            const statusInfo =
+              STATUS_MAP[project.status as keyof typeof STATUS_MAP] ?? STATUS_MAP.draft;
             const StatusIcon = statusInfo.icon;
 
             return (
-              <Card key={project.id} className="group relative overflow-hidden transition-shadow hover:shadow-md">
+              <Card
+                key={project.id}
+                className="group relative overflow-hidden transition-shadow hover:shadow-md"
+              >
                 <div className="flex h-40 items-center justify-center bg-gradient-to-br from-primary/5 to-purple-500/5">
                   {project.preview_url ? (
                     <Globe className="h-12 w-12 text-muted-foreground/40" />
@@ -96,7 +115,9 @@ export default function DashboardPage() {
                       <Link href={`/projects/${project.id}`} className="hover:underline">
                         <CardTitle className="text-base">{project.name}</CardTitle>
                       </Link>
-                      <CardDescription className="line-clamp-1 text-xs">{project.description}</CardDescription>
+                      <CardDescription className="line-clamp-1 text-xs">
+                        {project.description}
+                      </CardDescription>
                     </div>
                     <Button variant="ghost" size="icon" className="h-8 w-8">
                       <MoreHorizontal className="h-4 w-4" />
@@ -106,32 +127,39 @@ export default function DashboardPage() {
                 <CardContent className="space-y-3">
                   <div className="flex items-center gap-2">
                     <Badge variant={statusInfo.variant} className="gap-1">
-                      <StatusIcon className="h-3 w-3" />{statusInfo.label}
+                      <StatusIcon className="h-3 w-3" />
+                      {statusInfo.label}
                     </Badge>
-                    <span className="text-xs text-muted-foreground">{formatDate(project.created_at || '')}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {formatDate(project.created_at || '')}
+                    </span>
                   </div>
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" className="flex-1 gap-1" asChild>
                       <Link href={`/projects/${project.id}/editor`}>
-                        <Edit3 className="h-3.5 w-3.5" />Editar
+                        <Edit3 className="h-3.5 w-3.5" />
+                        Editar
                       </Link>
                     </Button>
                     {project.published_url ? (
                       <Button variant="outline" size="sm" className="flex-1 gap-1" asChild>
                         <a href={project.published_url} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="h-3.5 w-3.5" />Visitar
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          Visitar
                         </a>
                       </Button>
                     ) : project.preview_url ? (
                       <Button variant="outline" size="sm" className="flex-1 gap-1" asChild>
                         <a href={project.preview_url} target="_blank" rel="noopener noreferrer">
-                          <Globe className="h-3.5 w-3.5" />Preview
+                          <Globe className="h-3.5 w-3.5" />
+                          Preview
                         </a>
                       </Button>
                     ) : (
                       <Button variant="outline" size="sm" className="flex-1 gap-1" asChild>
                         <Link href={`/projects/${project.id}`}>
-                          <Sparkles className="h-3.5 w-3.5" />Generar
+                          <Sparkles className="h-3.5 w-3.5" />
+                          Generar
                         </Link>
                       </Button>
                     )}
@@ -147,8 +175,16 @@ export default function DashboardPage() {
         <div className="grid gap-4 sm:grid-cols-3">
           {[
             { label: 'Sitios creados', value: projects.length, icon: Globe },
-            { label: 'Publicados', value: projects.filter((p) => p.status === 'published').length, icon: ExternalLink },
-            { label: 'Borradores', value: projects.filter((p) => p.status === 'draft').length, icon: Edit3 },
+            {
+              label: 'Publicados',
+              value: projects.filter((p) => p.status === 'published').length,
+              icon: ExternalLink,
+            },
+            {
+              label: 'Borradores',
+              value: projects.filter((p) => p.status === 'draft').length,
+              icon: Edit3,
+            },
           ].map(({ label, value, icon: Icon }) => (
             <Card key={label}>
               <CardContent className="flex items-center gap-4 py-4">
