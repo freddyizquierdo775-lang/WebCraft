@@ -19,7 +19,7 @@
     "@fastify/websocket": "^11.3.0",
     "@supabase/supabase-js": "^2.49.4",
     "@webcraft/shared": "workspace:*",
-    "drizzle-orm": "^0.38.3",
+    "drizzle-orm": "^0.45.2",
     "fastify": "^5.2.2",
     "openai": "^4.85.1",
     "postgres": "^3.4.5",
