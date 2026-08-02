@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-// biome-ignore lint/style/noNonNullAssertion: env vars required by Supabase
 import { NextResponse } from 'next/server';
 
 // ─── POST /api/granular-edit ───────────────────────────────
@@ -20,8 +19,8 @@ export async function POST(request: Request) {
     }
 
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!, // biome-ignore lint/style/noNonNullAssertion
-      process.env.SUPABASE_SERVICE_ROLE_KEY!, // biome-ignore lint/style/noNonNullAssertion
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
     );
 
     const {

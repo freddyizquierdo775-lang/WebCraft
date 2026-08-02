@@ -58,9 +58,13 @@ export default function ProjectPage() {
   useEffect(() => {
     if (autoGenerating || generating || !currentProject) return;
     const hasBriefing =
-      currentProject.briefing_data && typeof currentProject.briefing_data === 'object' && Object.keys(currentProject.briefing_data).length > 0;
+      currentProject.briefing_data &&
+      typeof currentProject.briefing_data === 'object' &&
+      Object.keys(currentProject.briefing_data).length > 0;
     const needsGeneration =
-      (currentProject.status === 'draft' || currentProject.status === 'generating') && hasBriefing && (!currentProject.html_content || currentProject.html_content.length < 10);
+      (currentProject.status === 'draft' || currentProject.status === 'generating') &&
+      hasBriefing &&
+      (!currentProject.html_content || currentProject.html_content.length < 10);
     if (needsGeneration) {
       setAutoGenerating(true);
       handleGenerate();
