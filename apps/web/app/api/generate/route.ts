@@ -124,7 +124,7 @@ export async function POST(request: Request) {
         'X-Title': 'WebCraft AI Studio',
       },
       body: JSON.stringify({
-        model: 'google/gemma-4-26b-a4b-it:free',
+        model: 'openrouter/auto',
         messages: [
           { role: 'system', content: prompt },
           {
@@ -195,7 +195,7 @@ export async function POST(request: Request) {
       p_user_id: user.id,
       p_amount: creditsCost,
       p_type: 'generation',
-      p_reference: { project_id: projectId, model: 'google/gemma-4-26b-a4b-it:free' },
+      p_reference: { project_id: projectId, model: 'openrouter/auto' },
       p_idempotency_key: `gen_${projectId}_${Date.now()}`,
     });
 
@@ -204,7 +204,7 @@ export async function POST(request: Request) {
       project_id: projectId,
       user_id: user.id,
       prompt: project.description || project.name,
-      model_used: 'google/gemma-4-26b-a4b-it:free',
+      model_used: 'openrouter/auto',
       tokens_in: tokensIn,
       tokens_out: tokensOut,
       credits_cost: creditsCost,
@@ -228,7 +228,7 @@ export async function POST(request: Request) {
         credits_used: creditsCost,
         credits_remaining: updatedProfile?.credits_balance || 0,
         duration_ms: duration,
-        model: 'google/gemma-4-26b-a4b-it:free',
+        model: 'openrouter/auto',
       },
     });
   } catch (err) {
