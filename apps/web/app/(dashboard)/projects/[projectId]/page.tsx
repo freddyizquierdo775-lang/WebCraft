@@ -53,7 +53,21 @@ export default function ProjectPage() {
     if (projectId) fetchProject(projectId);
   }, [projectId, fetchProject]);
 
-  // Simular progreso durante generación
+  // Auto-disparar generación si el proyecto es nuevo (draft + briefing + sin html)
+  const [autoGenerating, setAutoGenerating] = useState(false);
+  useEffect(() => {
+    if (autoGenerating || generating || !currentProject) return;
+    const hasBriefing =
+      currentProject.briefing_data && typeof currentProject.briefing_data === 'object' && Object.keys(currentProject.briefing_data).length > 0;
+    const needsGeneration =
+      currentProject.status === 'draft' && hasBriefing && (!currentProject.html_content || currentProject.html_content.length < 10);
+    if (needsGeneration) {
+      setAutoGenerating(true);
+      handleGenerate();
+    }
+  }, [currentProject, autoGenerating, generating]);
+
+  // Progress bar animation
   useEffect(() => {
     if (!generating) {
       setGenProgress(0);
