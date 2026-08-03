@@ -59,8 +59,9 @@ export function CanvasSectionPanel({
       onClick={handleClick}
       onKeyDown={handleClick as unknown as React.KeyboardEventHandler}
       className={cn(
-        'group relative rounded-xl transition-all duration-200',
-        editMode && 'cursor-pointer border-2 border-dashed border-gray-300 hover:border-purple-300',
+        'group relative rounded-2xl bg-white shadow-sm transition-all duration-200',
+        'border-2',
+        editMode && 'cursor-pointer border-dashed border-gray-300 hover:border-gray-500',
         isSelected && editMode && 'border-purple-500 border-solid shadow-lg shadow-purple-500/10',
       )}
     >

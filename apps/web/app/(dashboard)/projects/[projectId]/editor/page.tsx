@@ -312,7 +312,7 @@ export default function EditorPage() {
       <aside
         className={cn(
           'flex flex-col border-r bg-gray-50 transition-all duration-300',
-          sidebarOpen ? 'w-56' : 'w-14',
+          sidebarOpen ? 'w-52' : 'w-14',
         )}
       >
         <div className="flex items-center justify-between px-3 py-3">
@@ -445,7 +445,7 @@ export default function EditorPage() {
         >
           <div className="mx-auto max-w-3xl px-6 py-8">
             {ast?.children ? (
-              <div className="flex flex-col gap-8 pb-32">
+              <div className="flex flex-col gap-10 pb-32">
                 {editMode
                   ? ast.children.map((child, index) => (
                       <CanvasSectionPanel

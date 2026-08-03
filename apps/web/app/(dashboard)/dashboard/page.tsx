@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import ReactDOM from 'react-dom';
 
 const STATUS_MAP = {
   draft: { label: 'Borrador', variant: 'secondary' as const, icon: Edit3 },
@@ -72,54 +73,65 @@ function ActionsDropdown({
       >
         <MoreHorizontal className="h-4 w-4" />
       </Button>
-      {open && (
-        <div className="absolute right-0 top-9 z-50 w-44 rounded-xl border bg-card p-1 shadow-xl">
-          <button
-            type="button"
-            onClick={() => {
-              onEdit();
-              setOpen(false);
+      {open &&
+        ReactDOM.createPortal(
+          <div
+            className="fixed z-[9999] w-44 rounded-xl border bg-card p-1 shadow-xl"
+            style={{ top: 'auto', left: 'auto' }}
+            ref={(el) => {
+              if (!el || !ref.current) return;
+              const rect = ref.current.getBoundingClientRect();
+              el.style.top = `${rect.bottom + 4}px`;
+              el.style.left = `${rect.right - 176}px`;
             }}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-muted"
           >
-            <Edit3 className="h-4 w-4" />
-            Editar
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              onDomain();
-              setOpen(false);
-            }}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-muted"
-          >
-            <Globe className="h-4 w-4" />
-            Configurar dominio
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              onDuplicate();
-              setOpen(false);
-            }}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-muted"
-          >
-            <Copy className="h-4 w-4" />
-            Duplicar
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              onDelete();
-              setOpen(false);
-            }}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-destructive hover:bg-destructive/10"
-          >
-            <Trash2 className="h-4 w-4" />
-            Eliminar
-          </button>
-        </div>
-      )}
+            <button
+              type="button"
+              onClick={() => {
+                onEdit();
+                setOpen(false);
+              }}
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-muted"
+            >
+              <Edit3 className="h-4 w-4" />
+              Editar
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onDomain();
+                setOpen(false);
+              }}
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-muted"
+            >
+              <Globe className="h-4 w-4" />
+              Configurar dominio
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onDuplicate();
+                setOpen(false);
+              }}
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-muted"
+            >
+              <Copy className="h-4 w-4" />
+              Duplicar
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onDelete();
+                setOpen(false);
+              }}
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="h-4 w-4" />
+              Eliminar
+            </button>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
