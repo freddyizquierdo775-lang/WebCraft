@@ -2,17 +2,38 @@
 
 import { AstRenderer } from '@/components/editor/AstRenderer';
 import { BottomAIPanel } from '@/components/editor/BottomAIPanel';
-import { CanvasSectionPanel } from '@/components/editor/CanvasSectionPanel';
 import { OutlinePanel } from '@/components/editor/OutlinePanel';
-import { RightFloatingBar } from '@/components/editor/RightFloatingBar';
+import { Button } from '@/components/ui/button';
 import { createBrowserClient } from '@/lib/supabase';
+import { cn } from '@/lib/utils';
 import { useEditorStore } from '@/stores/editor-store';
 import { useProjectStore } from '@/stores/project-store';
 import type { ASTNode } from '@/types/ast';
-import { ArrowLeft, Edit3, Eye } from 'lucide-react';
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowUp,
+  Edit3,
+  Eye,
+  GripVertical,
+  Palette,
+  Trash2,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
+
+// ─── Color palette selector ─────────────────────────
+const QUICK_COLORS = [
+  '#1e40af',
+  '#3b82f6',
+  '#10b981',
+  '#f97316',
+  '#ec4899',
+  '#8b5cf6',
+  '#18181b',
+  '#ffffff',
+];
 
 function astToHtml(node: ASTNode): string {
   const classes = node.classes.length > 0 ? ` class="${node.classes.join(' ')}"` : '';
@@ -37,14 +58,14 @@ const DEFAULT_AST: ASTNode = {
     {
       id: 'header',
       tag: 'header',
-      classes: ['p-6', 'bg-purple-600', 'text-white'],
+      classes: ['p-6', 'bg-blue-600', 'text-white'],
       styles: {},
-      text: 'Mi Sitio Web',
+      text: 'Mi Sitio',
       children: [
         {
           id: 'nav',
           tag: 'nav',
-          classes: ['flex', 'gap-4', 'mt-2'],
+          classes: ['flex', 'gap-4', 'mt-2', 'text-sm'],
           styles: {},
           text: 'Inicio | Servicios | Contacto',
         },
@@ -53,9 +74,38 @@ const DEFAULT_AST: ASTNode = {
     {
       id: 'hero',
       tag: 'section',
-      classes: ['p-12', 'text-center'],
+      classes: ['p-12', 'text-center', 'bg-gradient-to-br', 'from-blue-50', 'to-white'],
       styles: {},
-      text: 'Bienvenido a tu nuevo sitio',
+      text: 'Bienvenido — tu sitio profesional comienza aquí',
+    },
+    {
+      id: 'features',
+      tag: 'section',
+      classes: ['p-8', 'grid', 'grid-cols-3', 'gap-6'],
+      styles: {},
+      children: [
+        {
+          id: 'card1',
+          tag: 'div',
+          classes: ['p-6', 'bg-white', 'rounded-xl', 'shadow-sm', 'border', 'text-center'],
+          styles: {},
+          text: '⚡ Rápido',
+        },
+        {
+          id: 'card2',
+          tag: 'div',
+          classes: ['p-6', 'bg-white', 'rounded-xl', 'shadow-sm', 'border', 'text-center'],
+          styles: {},
+          text: '🎨 Personalizable',
+        },
+        {
+          id: 'card3',
+          tag: 'div',
+          classes: ['p-6', 'bg-white', 'rounded-xl', 'shadow-sm', 'border', 'text-center'],
+          styles: {},
+          text: '🚀 IA-Powered',
+        },
+      ],
     },
     {
       id: 'footer',
@@ -67,6 +117,117 @@ const DEFAULT_AST: ASTNode = {
   ],
 };
 
+// ─── Section card on the stitch canvas ───────────────
+function SectionCard({
+  node,
+  index,
+  total,
+  isSelected,
+  onSelect,
+  onMoveUp,
+  onMoveDown,
+  onDelete,
+  editMode,
+}: {
+  node: ASTNode;
+  index: number;
+  total: number;
+  isSelected: boolean;
+  onSelect: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  onDelete?: () => void;
+  editMode: boolean;
+}) {
+  const sectionLabel = node.text?.slice(0, 25) || node.tag;
+
+  return (
+    <div
+      className={cn(
+        'group relative rounded-2xl border bg-white transition-all duration-200',
+        editMode && 'cursor-pointer hover:shadow-lg',
+        isSelected && editMode && 'ring-2 ring-purple-500 shadow-xl',
+        !editMode && 'border-transparent',
+      )}
+      onClick={() => editMode && onSelect()}
+      onKeyDown={(e) => {
+        if (editMode && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
+    >
+      {/* Drag handle + label */}
+      {editMode && (
+        <div className="absolute -left-1 top-4 flex -translate-x-full items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </div>
+      )}
+
+      {/* Toolbar on select */}
+      {editMode && isSelected && (
+        <div className="absolute -top-9 right-2 z-20 flex items-center gap-1 rounded-lg border bg-white px-2 py-1 shadow-lg">
+          <span className="mr-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+            {sectionLabel}
+          </span>
+          {onMoveUp && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMoveUp();
+              }}
+            >
+              <ArrowUp className="h-3 w-3" />
+            </Button>
+          )}
+          {onMoveDown && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMoveDown();
+              }}
+            >
+              <ArrowDown className="h-3 w-3" />
+            </Button>
+          )}
+          {onDelete && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-red-500"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Section preview */}
+      <div className={cn('overflow-hidden rounded-2xl', editMode && 'pointer-events-none')}>
+        <AstRenderer node={node} editMode={false} />
+      </div>
+
+      {/* Position indicator */}
+      {editMode && (
+        <div className="absolute bottom-2 right-2 rounded-md bg-black/60 px-1.5 py-0.5 text-[9px] text-white opacity-0 transition-opacity group-hover:opacity-100">
+          Sección {index + 1}/{total}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Page ────────────────────────────────────────────
 export default function EditorPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const { currentProject, fetchProject } = useProjectStore();
@@ -74,19 +235,16 @@ export default function EditorPage() {
 
   const [showOutline, setShowOutline] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
+  const [_hasChanges, setHasChanges] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [editMode, setEditMode] = useState(true);
 
   const historyIndex = useEditorStore((s) => s.historyIndex);
   const historyLen = useEditorStore((s) => s.history.length);
-  const canUndo = historyIndex > 0;
-  const canRedo = historyIndex < historyLen - 1;
 
   useEffect(() => {
     if (projectId) fetchProject(projectId);
   }, [projectId, fetchProject]);
-
   useEffect(() => {
     if (currentProject?.html_content) {
       setAst(DEFAULT_AST);
@@ -106,7 +264,15 @@ export default function EditorPage() {
     setSaving(false);
   }, [projectId, ast]);
 
-  // Keyboard shortcuts
+  // Auto-save after 30s when there are changes
+  useEffect(() => {
+    if (!_hasChanges) return;
+    const t = setTimeout(() => {
+      handleSave();
+    }, 30000);
+    return () => clearTimeout(t);
+  }, [_hasChanges, handleSave]);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
@@ -128,55 +294,33 @@ export default function EditorPage() {
     return () => window.removeEventListener('keydown', handler);
   }, [undo, redo, handleSave]);
 
-  useEffect(() => {
-    if (!hasChanges) return;
-    const t = setTimeout(() => handleSave(), 30000);
-    return () => clearTimeout(t);
-  }, [hasChanges, handleSave]);
-
-  // AI request — global (bottom bar)
-  const handleAIRequest = useCallback(
-    async (prompt: string) => {
-      if (!ast || !projectId) return;
-      setAiLoading(true);
-      console.log('[AI Global Payload]', { prompt, selectedElementId, ast, projectId });
-      await new Promise((r) => setTimeout(r, 1500));
-      setAiLoading(false);
-      setHasChanges(true);
-    },
-    [ast, selectedElementId, projectId],
-  );
-
-  // Section-level AI edit
-  const handleSectionAIEdit = useCallback((sectionId: string, prompt: string) => {
-    console.log('[Section AI Edit]', { sectionId, prompt });
+  const handleAIRequest = useCallback(async (_prompt: string) => {
+    setAiLoading(true);
+    await new Promise((r) => setTimeout(r, 1500));
+    setAiLoading(false);
     setHasChanges(true);
   }, []);
 
-  // Reorder sections
   const moveSection = useCallback(
-    (index: number, direction: 'up' | 'down') => {
+    (index: number, dir: 'up' | 'down') => {
       if (!ast?.children) return;
-      const newChildren = [...ast.children];
-      const targetIndex = direction === 'up' ? index - 1 : index + 1;
-      if (targetIndex < 0 || targetIndex >= newChildren.length) return;
-      const a = newChildren[index];
-      const b = newChildren[targetIndex];
+      const children = [...ast.children];
+      const target = dir === 'up' ? index - 1 : index + 1;
+      if (target < 0 || target >= children.length) return;
+      const a = children[index];
+      const b = children[target];
       if (!a || !b) return;
-      [newChildren[index], newChildren[targetIndex]] = [b, a];
-      const newAst = { ...ast, children: newChildren };
-      setAst(newAst);
+      [children[index], children[target]] = [b, a];
+      setAst({ ...ast, children });
       setHasChanges(true);
     },
     [ast, setAst],
   );
 
-  // Delete section
   const deleteSection = useCallback(
     (index: number) => {
       if (!ast?.children) return;
-      const newChildren = ast.children.filter((_, i) => i !== index);
-      setAst({ ...ast, children: newChildren });
+      setAst({ ...ast, children: ast.children.filter((_, i) => i !== index) });
       setHasChanges(true);
     },
     [ast, setAst],
@@ -184,105 +328,109 @@ export default function EditorPage() {
 
   if (!currentProject) {
     return (
-      <div className="flex h-screen items-center justify-center bg-dot-pattern">
-        <p className="text-muted-foreground">Cargando proyecto...</p>
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <p className="text-gray-400">Cargando proyecto...</p>
       </div>
     );
   }
 
   return (
-    <div className="relative flex h-screen flex-col overflow-hidden bg-dot-pattern">
-      {/* Top bar */}
-      <div className="absolute left-4 top-4 z-50 flex items-center gap-3">
-        <Link href={`/projects/${projectId}`}>
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl border bg-card/90 text-muted-foreground shadow-sm backdrop-blur transition-colors hover:bg-card hover:text-foreground">
-            <ArrowLeft className="h-4 w-4" />
-          </div>
-        </Link>
-        <span className="text-sm font-medium text-muted-foreground">{currentProject.name}</span>
-        {saving && (
-          <span className="text-xs text-muted-foreground animate-pulse">Guardando...</span>
-        )}
-
-        {/* Edit / Preview toggle */}
-        <div className="ml-4 flex items-center rounded-lg border bg-card/90 p-0.5 shadow-sm backdrop-blur">
-          <button
-            type="button"
-            onClick={() => setEditMode(true)}
-            className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${editMode ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+    <div className="flex h-screen flex-col bg-gray-50">
+      {/* ── Top bar ── */}
+      <header className="flex items-center justify-between border-b bg-white px-4 py-2 shadow-sm z-30">
+        <div className="flex items-center gap-3">
+          <Link
+            href={`/projects/${projectId}`}
+            className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-gray-100"
           >
-            <Edit3 className="h-3.5 w-3.5" /> Editar
-          </button>
-          <button
-            type="button"
-            onClick={() => setEditMode(false)}
-            className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${!editMode ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-          >
-            <Eye className="h-3.5 w-3.5" /> Preview
-          </button>
+            <ArrowLeft className="h-4 w-4 text-gray-500" />
+          </Link>
+          <span className="text-sm font-semibold text-gray-700">{currentProject.name}</span>
+          {saving && <span className="text-xs text-gray-400 animate-pulse">Guardando...</span>}
         </div>
-      </div>
 
-      {/* Canvas */}
-      <div className="flex flex-1 items-center justify-center p-8 pt-20">
-        <div className="w-full max-w-5xl overflow-hidden rounded-xl border bg-card shadow-2xl">
-          <div className="flex items-center gap-1.5 border-b bg-muted/50 px-4 py-2.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
-            <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-            <span className="h-2.5 w-2.5 rounded-full bg-green-400" />
-            <span className="ml-3 text-[11px] text-muted-foreground">
-              {currentProject.name || 'localhost:3000'}
-            </span>
+        <div className="flex items-center gap-3">
+          {/* Color palette quick selector */}
+          {editMode && (
+            <div className="flex items-center gap-1 rounded-lg border bg-gray-50 px-2 py-1">
+              <Palette className="h-3.5 w-3.5 text-gray-400" />
+              {QUICK_COLORS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className="h-5 w-5 rounded-full border transition-transform hover:scale-110"
+                  style={{ backgroundColor: c }}
+                  onClick={() => {
+                    /* future: apply color to selected */
+                  }}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Edit/Preview toggle */}
+          <div className="flex rounded-lg border bg-gray-50 p-0.5">
+            <button
+              type="button"
+              onClick={() => setEditMode(true)}
+              className={cn(
+                'flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium',
+                editMode ? 'bg-purple-600 text-white' : 'text-gray-500',
+              )}
+            >
+              <Edit3 className="h-3 w-3" />
+              Editar
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditMode(false)}
+              className={cn(
+                'flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium',
+                !editMode ? 'bg-purple-600 text-white' : 'text-gray-500',
+              )}
+            >
+              <Eye className="h-3 w-3" />
+              Preview
+            </button>
           </div>
-          <div className="max-h-[60vh] overflow-auto">
-            {ast ? (
-              editMode && ast.children ? (
-                // Stitch Canvas: wrap each top-level section in a panel
-                <div
-                  className={ast.classes.join(' ')}
-                  style={
-                    Object.keys(ast.styles).length > 0
-                      ? (ast.styles as React.CSSProperties)
-                      : undefined
-                  }
-                >
-                  {ast.children.map((child, index) => (
-                    <CanvasSectionPanel
-                      key={child.id}
-                      sectionId={child.id}
-                      sectionName={child.text ? child.text.slice(0, 30) : child.tag}
-                      isSelected={child.id === selectedElementId}
-                      onSelect={() => selectElement(child.id)}
-                      onMoveUp={index > 0 ? () => moveSection(index, 'up') : undefined}
-                      onMoveDown={
-                        index < (ast.children?.length ?? 0) - 1
-                          ? () => moveSection(index, 'down')
-                          : undefined
-                      }
-                      onDelete={() => deleteSection(index)}
-                      onAIEdit={(prompt) => handleSectionAIEdit(child.id, prompt)}
-                      editMode={editMode}
-                    >
-                      <AstRenderer node={child} editMode={editMode} />
-                    </CanvasSectionPanel>
-                  ))}
-                </div>
-              ) : (
-                <AstRenderer node={ast} editMode={false} />
-              )
-            ) : (
-              <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
-                Sin contenido — genera tu sitio desde el dashboard
-              </div>
-            )}
+
+          <Button variant="outline" size="sm" onClick={() => setShowOutline(!showOutline)}>
+            Estructura
+          </Button>
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              disabled={historyIndex <= 0}
+              onClick={() => {
+                undo();
+                setHasChanges(true);
+              }}
+            >
+              ↩
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              disabled={historyIndex >= historyLen - 1}
+              onClick={() => {
+                redo();
+                setHasChanges(true);
+              }}
+            >
+              ↪
+            </Button>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Outline panel */}
-      {showOutline && (
-        <div className="absolute left-4 top-20 z-40 w-56 rounded-xl border bg-card/95 shadow-lg backdrop-blur">
-          <div className="p-2">
+      {/* ── Canvas ── */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Outline drawer */}
+        {showOutline && (
+          <aside className="w-52 shrink-0 border-r bg-white p-3">
             <OutlinePanel
               tree={
                 ast
@@ -307,25 +455,45 @@ export default function EditorPage() {
               onSelectNode={(id: string) => selectElement(id)}
               selectedId={selectedElementId}
             />
-          </div>
-        </div>
-      )}
+          </aside>
+        )}
 
-      <RightFloatingBar
-        canUndo={canUndo}
-        canRedo={canRedo}
-        onUndo={() => {
-          undo();
-          setHasChanges(true);
-        }}
-        onRedo={() => {
-          redo();
-          setHasChanges(true);
-        }}
-        onToggleOutline={() => setShowOutline(!showOutline)}
-        showOutline={showOutline}
-      />
+        {/* Main canvas area */}
+        <main className="flex-1 overflow-y-auto p-6">
+          {ast?.children ? (
+            <div className="mx-auto flex max-w-2xl flex-col gap-6 pb-24">
+              {editMode
+                ? ast.children.map((child, index) => (
+                    <SectionCard
+                      key={child.id}
+                      node={child}
+                      index={index}
+                      total={ast.children?.length ?? 0}
+                      isSelected={child.id === selectedElementId}
+                      onSelect={() => selectElement(child.id)}
+                      onMoveUp={index > 0 ? () => moveSection(index, 'up') : undefined}
+                      onMoveDown={
+                        index < (ast.children?.length ?? 0) - 1
+                          ? () => moveSection(index, 'down')
+                          : undefined
+                      }
+                      onDelete={() => deleteSection(index)}
+                      editMode={editMode}
+                    />
+                  ))
+                : ast.children.map((child) => (
+                    <AstRenderer key={child.id} node={child} editMode={false} />
+                  ))}
+            </div>
+          ) : (
+            <div className="flex h-64 items-center justify-center text-sm text-gray-400">
+              Sin contenido — genera tu sitio desde el dashboard
+            </div>
+          )}
+        </main>
+      </div>
 
+      {/* AI bar */}
       {editMode && <BottomAIPanel onSubmit={handleAIRequest} loading={aiLoading} />}
     </div>
   );
