@@ -55,6 +55,7 @@ export function CanvasSectionPanel({
     <div
       data-section-id={sectionId}
       onClick={handleClick}
+      onKeyDown={handleClick as unknown as React.KeyboardEventHandler}
       className={cn(
         'group relative transition-all duration-200',
         editMode && 'cursor-pointer',
@@ -73,20 +74,43 @@ export function CanvasSectionPanel({
       {editMode && isSelected && (
         <div className="absolute -top-10 right-2 z-20 flex items-center gap-1 rounded-lg border bg-card p-1 shadow-lg">
           {onMoveUp && (
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onMoveUp(); }} title="Subir sección">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMoveUp();
+              }}
+              title="Subir sección"
+            >
               <ArrowUp className="h-3.5 w-3.5" />
             </Button>
           )}
           {onMoveDown && (
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onMoveDown(); }} title="Bajar sección">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMoveDown();
+              }}
+              title="Bajar sección"
+            >
               <ArrowDown className="h-3.5 w-3.5" />
             </Button>
           )}
           {onAIEdit && (
             <div className="relative">
               <Button
-                variant="ghost" size="icon" className="h-7 w-7"
-                onClick={(e) => { e.stopPropagation(); setShowAIPrompt(!showAIPrompt); }}
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowAIPrompt(!showAIPrompt);
+                }}
                 title="Editar con IA"
               >
                 <Sparkles className="h-3.5 w-3.5" />
@@ -99,18 +123,52 @@ export function CanvasSectionPanel({
                     placeholder="¿Qué quieres cambiar en esta sección?"
                     className="w-full resize-none rounded-lg border bg-muted/50 p-2 text-xs outline-none"
                     rows={3}
-                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAIEdit(); } }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleAIEdit();
+                      }
+                    }}
                   />
                   <div className="mt-1 flex justify-end gap-1">
-                    <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={(e) => { e.stopPropagation(); setShowAIPrompt(false); }}>Cancelar</Button>
-                    <Button size="sm" className="h-6 text-xs" onClick={(e) => { e.stopPropagation(); handleAIEdit(); }} disabled={!aiPromptText.trim()}>Enviar</Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 text-xs"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowAIPrompt(false);
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="h-6 text-xs"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAIEdit();
+                      }}
+                      disabled={!aiPromptText.trim()}
+                    >
+                      Enviar
+                    </Button>
                   </div>
                 </div>
               )}
             </div>
           )}
           {onDelete && (
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); onDelete(); }} title="Eliminar sección">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-destructive hover:text-destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              title="Eliminar sección"
+            >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
           )}
@@ -118,9 +176,7 @@ export function CanvasSectionPanel({
       )}
 
       {/* Children */}
-      <div className={cn(editMode && 'pointer-events-none')}>
-        {children}
-      </div>
+      <div className={cn(editMode && 'pointer-events-none')}>{children}</div>
     </div>
   );
 }

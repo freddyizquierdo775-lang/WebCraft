@@ -33,13 +33,17 @@ export function AstRenderer({ node, editMode = true }: AstRendererProps) {
   const className = [
     ...node.classes,
     isSelected ? 'ring-2 ring-purple-500 ring-offset-1' : '',
-    editMode ? 'cursor-pointer transition-all duration-150 hover:ring-1 hover:ring-purple-400/50' : '',
+    editMode
+      ? 'cursor-pointer transition-all duration-150 hover:ring-1 hover:ring-purple-400/50'
+      : '',
   ]
     .filter(Boolean)
     .join(' ');
 
   // Wrap children in pointer-events-none when in edit mode to prevent native link/button clicks
-  const children = node.children?.map((child) => <AstRenderer key={child.id} node={child} editMode={editMode} />);
+  const children = node.children?.map((child) => (
+    <AstRenderer key={child.id} node={child} editMode={editMode} />
+  ));
 
   return createElement(
     node.tag,

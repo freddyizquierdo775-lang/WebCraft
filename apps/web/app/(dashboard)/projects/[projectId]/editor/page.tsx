@@ -18,7 +18,9 @@ function astToHtml(node: ASTNode): string {
   const classes = node.classes.length > 0 ? ` class="${node.classes.join(' ')}"` : '';
   const styles =
     Object.keys(node.styles).length > 0
-      ? ` style="${Object.entries(node.styles).map(([k, v]) => `${k}:${v}`).join(';')}"`
+      ? ` style="${Object.entries(node.styles)
+          .map(([k, v]) => `${k}:${v}`)
+          .join(';')}"`
       : '';
   const children = node.children?.map(astToHtml).join('') ?? '';
   const voidTags = ['img', 'br', 'hr', 'input', 'meta', 'link'];
@@ -32,9 +34,36 @@ const DEFAULT_AST: ASTNode = {
   classes: ['min-h-screen', 'bg-white', 'flex', 'flex-col'],
   styles: {},
   children: [
-    { id: 'header', tag: 'header', classes: ['p-6', 'bg-purple-600', 'text-white'], styles: {}, text: 'Mi Sitio Web', children: [{ id: 'nav', tag: 'nav', classes: ['flex', 'gap-4', 'mt-2'], styles: {}, text: 'Inicio | Servicios | Contacto' }] },
-    { id: 'hero', tag: 'section', classes: ['p-12', 'text-center'], styles: {}, text: 'Bienvenido a tu nuevo sitio' },
-    { id: 'footer', tag: 'footer', classes: ['p-4', 'bg-gray-100', 'text-center', 'text-sm', 'text-gray-500', 'mt-auto'], styles: {}, text: '© 2026 WebCraft AI Studio' },
+    {
+      id: 'header',
+      tag: 'header',
+      classes: ['p-6', 'bg-purple-600', 'text-white'],
+      styles: {},
+      text: 'Mi Sitio Web',
+      children: [
+        {
+          id: 'nav',
+          tag: 'nav',
+          classes: ['flex', 'gap-4', 'mt-2'],
+          styles: {},
+          text: 'Inicio | Servicios | Contacto',
+        },
+      ],
+    },
+    {
+      id: 'hero',
+      tag: 'section',
+      classes: ['p-12', 'text-center'],
+      styles: {},
+      text: 'Bienvenido a tu nuevo sitio',
+    },
+    {
+      id: 'footer',
+      tag: 'footer',
+      classes: ['p-4', 'bg-gray-100', 'text-center', 'text-sm', 'text-gray-500', 'mt-auto'],
+      styles: {},
+      text: '© 2026 WebCraft AI Studio',
+    },
   ],
 };
 
@@ -54,17 +83,25 @@ export default function EditorPage() {
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < historyLen - 1;
 
-  useEffect(() => { if (projectId) fetchProject(projectId); }, [projectId, fetchProject]);
+  useEffect(() => {
+    if (projectId) fetchProject(projectId);
+  }, [projectId, fetchProject]);
 
   useEffect(() => {
-    if (currentProject?.html_content) { setAst(DEFAULT_AST); setHasChanges(false); }
+    if (currentProject?.html_content) {
+      setAst(DEFAULT_AST);
+      setHasChanges(false);
+    }
   }, [currentProject, setAst]);
 
   const handleSave = useCallback(async () => {
     if (!projectId || !ast) return;
     setSaving(true);
     const supabase = createBrowserClient();
-    await supabase.from('user_projects').update({ html_content: astToHtml(ast), updated_at: new Date().toISOString() }).eq('id', projectId);
+    await supabase
+      .from('user_projects')
+      .update({ html_content: astToHtml(ast), updated_at: new Date().toISOString() })
+      .eq('id', projectId);
     setHasChanges(false);
     setSaving(false);
   }, [projectId, ast]);
@@ -72,25 +109,43 @@ export default function EditorPage() {
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); setHasChanges(true); }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) { e.preventDefault(); redo(); setHasChanges(true); }
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); handleSave(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+        setHasChanges(true);
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) {
+        e.preventDefault();
+        redo();
+        setHasChanges(true);
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [undo, redo, handleSave]);
 
-  useEffect(() => { if (!hasChanges) return; const t = setTimeout(() => handleSave(), 30000); return () => clearTimeout(t); }, [hasChanges, handleSave]);
+  useEffect(() => {
+    if (!hasChanges) return;
+    const t = setTimeout(() => handleSave(), 30000);
+    return () => clearTimeout(t);
+  }, [hasChanges, handleSave]);
 
   // AI request — global (bottom bar)
-  const handleAIRequest = useCallback(async (prompt: string) => {
-    if (!ast || !projectId) return;
-    setAiLoading(true);
-    console.log('[AI Global Payload]', { prompt, selectedElementId, ast, projectId });
-    await new Promise((r) => setTimeout(r, 1500));
-    setAiLoading(false);
-    setHasChanges(true);
-  }, [ast, selectedElementId, projectId]);
+  const handleAIRequest = useCallback(
+    async (prompt: string) => {
+      if (!ast || !projectId) return;
+      setAiLoading(true);
+      console.log('[AI Global Payload]', { prompt, selectedElementId, ast, projectId });
+      await new Promise((r) => setTimeout(r, 1500));
+      setAiLoading(false);
+      setHasChanges(true);
+    },
+    [ast, selectedElementId, projectId],
+  );
 
   // Section-level AI edit
   const handleSectionAIEdit = useCallback((sectionId: string, prompt: string) => {
@@ -99,27 +154,40 @@ export default function EditorPage() {
   }, []);
 
   // Reorder sections
-  const moveSection = useCallback((index: number, direction: 'up' | 'down') => {
-    if (!ast?.children) return;
-    const newChildren = [...ast.children];
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= newChildren.length) return;
-    [newChildren[index], newChildren[targetIndex]] = [newChildren[targetIndex]!, newChildren[index]!];
-    const newAst = { ...ast, children: newChildren };
-    setAst(newAst);
-    setHasChanges(true);
-  }, [ast, setAst]);
+  const moveSection = useCallback(
+    (index: number, direction: 'up' | 'down') => {
+      if (!ast?.children) return;
+      const newChildren = [...ast.children];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= newChildren.length) return;
+      [newChildren[index], newChildren[targetIndex]] = [
+        newChildren[targetIndex]!,
+        newChildren[index]!,
+      ];
+      const newAst = { ...ast, children: newChildren };
+      setAst(newAst);
+      setHasChanges(true);
+    },
+    [ast, setAst],
+  );
 
   // Delete section
-  const deleteSection = useCallback((index: number) => {
-    if (!ast?.children) return;
-    const newChildren = ast.children.filter((_, i) => i !== index);
-    setAst({ ...ast, children: newChildren });
-    setHasChanges(true);
-  }, [ast, setAst]);
+  const deleteSection = useCallback(
+    (index: number) => {
+      if (!ast?.children) return;
+      const newChildren = ast.children.filter((_, i) => i !== index);
+      setAst({ ...ast, children: newChildren });
+      setHasChanges(true);
+    },
+    [ast, setAst],
+  );
 
   if (!currentProject) {
-    return <div className="flex h-screen items-center justify-center bg-dot-pattern"><p className="text-muted-foreground">Cargando proyecto...</p></div>;
+    return (
+      <div className="flex h-screen items-center justify-center bg-dot-pattern">
+        <p className="text-muted-foreground">Cargando proyecto...</p>
+      </div>
+    );
   }
 
   return (
@@ -132,7 +200,9 @@ export default function EditorPage() {
           </div>
         </Link>
         <span className="text-sm font-medium text-muted-foreground">{currentProject.name}</span>
-        {saving && <span className="text-xs text-muted-foreground animate-pulse">Guardando...</span>}
+        {saving && (
+          <span className="text-xs text-muted-foreground animate-pulse">Guardando...</span>
+        )}
 
         {/* Edit / Preview toggle */}
         <div className="ml-4 flex items-center rounded-lg border bg-card/90 p-0.5 shadow-sm backdrop-blur">
@@ -160,13 +230,22 @@ export default function EditorPage() {
             <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
             <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
             <span className="h-2.5 w-2.5 rounded-full bg-green-400" />
-            <span className="ml-3 text-[11px] text-muted-foreground">{currentProject.name || 'localhost:3000'}</span>
+            <span className="ml-3 text-[11px] text-muted-foreground">
+              {currentProject.name || 'localhost:3000'}
+            </span>
           </div>
           <div className="max-h-[60vh] overflow-auto">
             {ast ? (
               editMode && ast.children ? (
                 // Stitch Canvas: wrap each top-level section in a panel
-                <div className={ast.classes.join(' ')} style={Object.keys(ast.styles).length > 0 ? ast.styles as React.CSSProperties : undefined}>
+                <div
+                  className={ast.classes.join(' ')}
+                  style={
+                    Object.keys(ast.styles).length > 0
+                      ? (ast.styles as React.CSSProperties)
+                      : undefined
+                  }
+                >
                   {ast.children.map((child, index) => (
                     <CanvasSectionPanel
                       key={child.id}
@@ -175,7 +254,11 @@ export default function EditorPage() {
                       isSelected={child.id === selectedElementId}
                       onSelect={() => selectElement(child.id)}
                       onMoveUp={index > 0 ? () => moveSection(index, 'up') : undefined}
-                      onMoveDown={index < ast.children!.length - 1 ? () => moveSection(index, 'down') : undefined}
+                      onMoveDown={
+                        index < ast.children!.length - 1
+                          ? () => moveSection(index, 'down')
+                          : undefined
+                      }
                       onDelete={() => deleteSection(index)}
                       onAIEdit={(prompt) => handleSectionAIEdit(child.id, prompt)}
                       editMode={editMode}
@@ -188,7 +271,9 @@ export default function EditorPage() {
                 <AstRenderer node={ast} editMode={false} />
               )
             ) : (
-              <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">Sin contenido — genera tu sitio desde el dashboard</div>
+              <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
+                Sin contenido — genera tu sitio desde el dashboard
+              </div>
             )}
           </div>
         </div>
@@ -199,7 +284,26 @@ export default function EditorPage() {
         <div className="absolute left-4 top-20 z-40 w-56 rounded-xl border bg-card/95 shadow-lg backdrop-blur">
           <div className="p-2">
             <OutlinePanel
-              tree={ast ? [{ id: ast.id, tag: ast.tag, label: ast.tag, selected: ast.id === selectedElementId, children: ast.children?.map((c) => ({ id: c.id, tag: c.tag, label: c.text ?? c.tag, selected: c.id === selectedElementId, children: [] })) ?? [] }] : []}
+              tree={
+                ast
+                  ? [
+                      {
+                        id: ast.id,
+                        tag: ast.tag,
+                        label: ast.tag,
+                        selected: ast.id === selectedElementId,
+                        children:
+                          ast.children?.map((c) => ({
+                            id: c.id,
+                            tag: c.tag,
+                            label: c.text ?? c.tag,
+                            selected: c.id === selectedElementId,
+                            children: [],
+                          })) ?? [],
+                      },
+                    ]
+                  : []
+              }
               onSelectNode={(id: string) => selectElement(id)}
               selectedId={selectedElementId}
             />
@@ -207,7 +311,20 @@ export default function EditorPage() {
         </div>
       )}
 
-      <RightFloatingBar canUndo={canUndo} canRedo={canRedo} onUndo={() => { undo(); setHasChanges(true); }} onRedo={() => { redo(); setHasChanges(true); }} onToggleOutline={() => setShowOutline(!showOutline)} showOutline={showOutline} />
+      <RightFloatingBar
+        canUndo={canUndo}
+        canRedo={canRedo}
+        onUndo={() => {
+          undo();
+          setHasChanges(true);
+        }}
+        onRedo={() => {
+          redo();
+          setHasChanges(true);
+        }}
+        onToggleOutline={() => setShowOutline(!showOutline)}
+        showOutline={showOutline}
+      />
 
       {editMode && <BottomAIPanel onSubmit={handleAIRequest} loading={aiLoading} />}
     </div>
