@@ -160,10 +160,10 @@ export default function EditorPage() {
       const newChildren = [...ast.children];
       const targetIndex = direction === 'up' ? index - 1 : index + 1;
       if (targetIndex < 0 || targetIndex >= newChildren.length) return;
-      [newChildren[index], newChildren[targetIndex]] = [
-        newChildren[targetIndex]!,
-        newChildren[index]!,
-      ];
+      const a = newChildren[index];
+      const b = newChildren[targetIndex];
+      if (!a || !b) return;
+      [newChildren[index], newChildren[targetIndex]] = [b, a];
       const newAst = { ...ast, children: newChildren };
       setAst(newAst);
       setHasChanges(true);
@@ -255,7 +255,7 @@ export default function EditorPage() {
                       onSelect={() => selectElement(child.id)}
                       onMoveUp={index > 0 ? () => moveSection(index, 'up') : undefined}
                       onMoveDown={
-                        index < ast.children!.length - 1
+                        index < (ast.children?.length ?? 0) - 1
                           ? () => moveSection(index, 'down')
                           : undefined
                       }
