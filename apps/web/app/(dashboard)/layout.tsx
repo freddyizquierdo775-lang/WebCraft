@@ -30,12 +30,18 @@ const NAV_ITEMS = [
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+
+  // ── Editor route: render sin sidebar ni header ──
+  if (pathname.includes('/editor')) {
+    return <>{children}</>;
+  }
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   const { user, loadUser } = useAuthStore();
   const credits = user?.credits_balance ?? 0;
   const plan = user?.plan ?? 'free';
-  const pathname = usePathname();
   const router = useRouter();
 
   useEffect(() => {
