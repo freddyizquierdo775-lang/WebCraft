@@ -336,8 +336,19 @@ export default function EditorPage() {
         <h2 className="text-lg font-semibold text-gray-700">No se pudo cargar el proyecto</h2>
         <p className="max-w-sm text-center text-sm text-gray-500">{error}</p>
         <div className="flex gap-3">
-          <a href="/dashboard"><Button variant="outline" size="sm">← Volver al dashboard</Button></a>
-          <Button size="sm" onClick={() => { if (projectId) fetchProject(projectId); }}>🔄 Reintentar</Button>
+          <a href="/dashboard">
+            <Button variant="outline" size="sm">
+              ← Volver al dashboard
+            </Button>
+          </a>
+          <Button
+            size="sm"
+            onClick={() => {
+              if (projectId) fetchProject(projectId);
+            }}
+          >
+            🔄 Reintentar
+          </Button>
         </div>
       </div>
     );
