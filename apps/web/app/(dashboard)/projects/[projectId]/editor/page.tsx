@@ -230,7 +230,7 @@ function SectionCard({
 // ─── Page ────────────────────────────────────────────
 export default function EditorPage() {
   const { projectId } = useParams<{ projectId: string }>();
-  const { currentProject, fetchProject } = useProjectStore();
+  const { currentProject, fetchProject, loading, error } = useProjectStore();
   const { ast, selectedElementId, setAst, selectElement, undo, redo } = useEditorStore();
 
   const [showOutline, setShowOutline] = useState(false);
@@ -326,10 +326,38 @@ export default function EditorPage() {
     [ast, setAst],
   );
 
+  // Error state — fetchProject falló (sesión expirada, RLS, red)
+  if (error) {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center gap-4 bg-gray-50">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+          <span className="text-2xl">⚠️</span>
+        </div>
+        <h2 className="text-lg font-semibold text-gray-700">No se pudo cargar el proyecto</h2>
+        <p className="max-w-sm text-center text-sm text-gray-500">{error}</p>
+        <div className="flex gap-3">
+          <a href="/dashboard"><Button variant="outline" size="sm">← Volver al dashboard</Button></a>
+          <Button size="sm" onClick={() => { if (projectId) fetchProject(projectId); }}>🔄 Reintentar</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading state
+  if (loading && !currentProject) {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center gap-3 bg-gray-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-purple-600 border-t-transparent" />
+        <p className="text-sm text-gray-400">Cargando proyecto...</p>
+      </div>
+    );
+  }
+
+  // Final guard — no currentProject after loading finished (shouldn't happen but safe)
   if (!currentProject) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-50">
-        <p className="text-gray-400">Cargando proyecto...</p>
+        <p className="text-gray-400">Proyecto no encontrado</p>
       </div>
     );
   }
