@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "biome check .",
     "test": "jest --passWithNoTests",
+    "test:e2e": "playwright test",
     "clean": "rm -rf .next"
   },
   "dependencies": {
@@ -40,6 +41,7 @@
     "zustand": "^5.0.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@testing-library/jest-dom": "^7.0.0",
     "@testing-library/react": "^16.3.2",
     "@types/jest": "^30.0.0",

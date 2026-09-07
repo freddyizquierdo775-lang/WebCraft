@@ -10,3 +10,6 @@ dist
 coverage
 .vercel
 .env*
+test-results
+playwright-report
+blob-report
