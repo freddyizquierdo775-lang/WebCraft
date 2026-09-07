@@ -170,16 +170,34 @@ CI verifica 9 rutas: `/ /login /signup /onboarding /marketplace /ecommerce /paym
 
 ---
 
-## Recomendaciones priorizadas
+## Recomendaciones priorizadas — ESTADO FINAL
 
-1. **[URGENTE]** `sharp ≥ 0.35.0` para parchear CVE-2026-33327 (HIGH)
-2. **[HIGH]** `postcss ≥ 8.4.31` — fix disponible, bajo riesgo
-3. **[HIGH]** `fastify ≥ 5.12.1` para X-Forwarded spoofing
-4. **[MED]** Instalar Playwright y escribir E2E del editor (UX crítico)
-5. **[LOW]** fast-uri — sin patch publicado, monitorear
+| # | Recomendación | Estado |
+|---|---|---|
+| 1 | `sharp ≥ 0.35.0` (CVE-2026-33327) | ✅ `0.35.4` |
+| 2 | `postcss ≥ 8.4.31` | ✅ `8.5.28` |
+| 3 | `fastify ≥ 5.12.1` | ✅ `5.12.3` |
+| 4 | Playwright + E2E del editor | ✅ 7 tests, 7/7 PASS |
+| 5 | fast-uri — monitorear | ✅ parchado transitivo (3.1.7/4.1.4) |
 
-## Cobertura real de esta auditoría
+### Resultado: `pnpm audit --production` → "No known vulnerabilities found"
 
-**3/9 niveles ejecutados completamente:** Unitarias, Funcionales, Humo.
-**2/9 niveles verificados manualmente:** Aceptación (producción), E2E (DOM check).
-**4/9 niveles NO ejecutados:** Integración, Rendimiento, Regresión, E2E automatizado.
+### E2E (Playwright) — recomendación #4 ejecutada
+
+Suite en `apps/web/e2e/` + `playwright.config.ts`:
+- `landing.spec.ts` — hero, CTAs, 3 features
+- `auth.spec.ts` — login y signup renderizan formulario
+- `auth-guard.spec.ts` — /dashboard, /projects/[id]/editor, /billing redirigen a /login
+
+**Verificado:** `7 passed (5.5s)` en chromium headless.
+**CI:** reemplaza smoke-test curl por Playwright; pnpm 9 → 11.18.0; timeout 15m.
+
+### Fix semántico adicional (a11y)
+
+`components/ui/card.tsx`: `CardTitle` era `<div>` — ahora `<h3>` (y `CardDescription` `<p>`). Descubierto porque los tests E2E con `getByRole('heading')` no encontraban los títulos. Corrige el hallazgo "h1→h3 sin h2" del QA visual.
+
+## Cobertura real de esta auditoría (actualizada)
+
+**4/9 niveles ejecutados completamente:** Unitarias, Funcionales, Humo, E2E.
+**1/9 verificados manualmente:** Aceptación (producción).
+**4/9 NO ejecutados:** Integración, Rendimiento, Regresión, Aceptación automatizada.
