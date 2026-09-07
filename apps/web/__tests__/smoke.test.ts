@@ -15,8 +15,8 @@ describe('Landing Page', () => {
     `;
     const links = document.querySelectorAll('a');
     expect(links.length).toBeGreaterThanOrEqual(2);
-    expect(links[0].getAttribute('href')).toBe('/signup');
-    expect(links[1].getAttribute('href')).toBe('/login');
+    expect(links[0]?.getAttribute('href')).toBe('/signup');
+    expect(links[1]?.getAttribute('href')).toBe('/login');
   });
 });
 
